@@ -1,0 +1,3574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Diablo II: うる星やつら</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --d2-gold: #d4af37;
+      --d2-gold-bright: #f7dc84;
+      --d2-crimson: #991b1b;
+      --d2-obsidian: #070609;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      background-color: #050407;
+      background-image:
+        radial-gradient(circle at 50% 14%, rgba(153, 27, 27, 0.28), transparent 55%),
+        radial-gradient(circle at 50% 86%, rgba(212, 175, 55, 0.13), transparent 60%);
+      color: #f4ecda;
+      font-family: 'Noto Sans JP', sans-serif;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: max(6px, env(safe-area-inset-top));
+      padding-bottom: max(6px, env(safe-area-inset-bottom));
+      padding-left: max(4px, env(safe-area-inset-left));
+      padding-right: max(4px, env(safe-area-inset-right));
+    }
+
+    .font-gothic {
+      font-family: 'Cinzel', 'Noto Sans JP', serif;
+    }
+
+    /* Strict 9:16 portrait frame safely inside mobile browser chrome & PC desktop */
+    #app-shell {
+      position: relative;
+      aspect-ratio: 9 / 16;
+      width: auto;
+      max-width: 100vw;
+      height: min(94dvh, calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 12px), calc(100vw * 16 / 9));
+      max-height: 980px;
+      background: #09080c;
+      border: 1.5px solid rgba(212, 175, 55, 0.56);
+      border-radius: 18px;
+      box-shadow:
+        0 0 60px rgba(0, 0, 0, 0.96),
+        0 0 28px rgba(185, 28, 28, 0.28),
+        inset 0 0 34px rgba(0, 0, 0, 0.92);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (max-width: 640px) {
+      #app-shell {
+        width: min(100vw, calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px) * 9 / 16));
+        height: min(calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 10px), calc(100vw * 16 / 9));
+        border-radius: 12px;
+      }
+    }
+
+    .d2-panel {
+      background: linear-gradient(180deg, rgba(25, 19, 17, 0.97) 0%, rgba(10, 9, 12, 0.99) 100%);
+      border: 1px solid rgba(212, 175, 55, 0.36);
+      box-shadow: inset 0 1px 0 rgba(247, 220, 132, 0.2), 0 8px 24px rgba(0, 0, 0, 0.82);
+    }
+
+    .d2-btn {
+      background: linear-gradient(180deg, #3b2615 0%, #1b110a 100%);
+      border: 1px solid rgba(212, 175, 55, 0.58);
+      color: #faecc6;
+      box-shadow: inset 0 1px 0 rgba(255, 236, 179, 0.24), 0 3px 10px rgba(0, 0, 0, 0.72);
+      transition: transform 0.08s ease, filter 0.12s ease, border-color 0.12s ease;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .d2-btn:hover {
+      filter: brightness(1.14);
+      border-color: var(--d2-gold-bright);
+    }
+
+    .d2-btn:active, .d2-btn.is-active {
+      transform: scale(0.95);
+      filter: brightness(1.25);
+      border-color: #fef08a;
+    }
+
+    .d2-btn-crimson {
+      background: linear-gradient(180deg, #8e1919 0%, #3f0808 100%);
+      border: 1px solid rgba(248, 113, 113, 0.68);
+      color: #fff5f5;
+    }
+
+    .d2-btn-true {
+      background: linear-gradient(180deg, #581c87 0%, #1e1b4b 100%);
+      border: 1px solid rgba(250, 204, 21, 0.78);
+      color: #fef08a;
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.45), inset 0 1px 0 rgba(254, 240, 138, 0.35);
+    }
+
+    .rarity-common { color: #d6d3d1; }
+    .rarity-magic  { color: #60a5fa; }
+    .rarity-rare   { color: #facc15; }
+    .rarity-unique { color: #fb923c; }
+    .rarity-rune   { color: #f59e0b; }
+    .rarity-charm  { color: #34d399; }
+
+    #game-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(12, 10, 12, 0.6);
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.45);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-shell">
+    <!-- ==================== TOP HUD (COMBAT SCREEN) ==================== -->
+    <header id="combat-hud" class="hidden shrink-0 z-20 d2-panel px-2 py-1.5 border-b border-amber-500/40">
+      <div class="flex items-center justify-between gap-1 text-[11px]">
+        <div class="flex items-center gap-1 min-w-0">
+          <span id="hud-act-badge" class="px-1.5 py-0.5 rounded bg-red-950/90 border border-amber-500/50 text-amber-300 font-black tracking-tight shrink-0">ACT 1</span>
+          <span id="hud-zone-name" class="truncate text-amber-100/95 font-semibold">雷鳴の荒れ地・友引外縁</span>
+        </div>
+        <div class="flex items-center gap-1 shrink-0">
+          <span id="hud-enemy-cnt" class="px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/45 text-[10px] text-rose-200 font-bold">敵:0</span>
+          <span id="hud-lv" class="px-1.5 py-0.5 rounded bg-stone-900/90 border border-stone-700 text-amber-200 font-bold">Lv.1</span>
+          <span id="hud-gold" class="px-1.5 py-0.5 rounded bg-stone-900/90 border border-amber-700/45 text-yellow-300 font-bold">0G</span>
+          <button id="btn-audio-toggle" class="d2-btn px-1.5 py-0.5 rounded text-[11px]" title="音声切替">🔊</button>
+          <button id="btn-open-menu" class="d2-btn px-2 py-0.5 rounded text-[10px] font-bold">袋/保存</button>
+        </div>
+      </div>
+
+      <!-- HP / MP Bars -->
+      <div class="mt-1.5 grid grid-cols-2 gap-1.5 text-[10px]">
+        <div>
+          <div class="flex justify-between text-rose-200/90 font-bold mb-0.5">
+            <span>♥ あたる HP</span>
+            <span id="hud-hp-text">130/130</span>
+          </div>
+          <div class="h-2 rounded-full bg-stone-950 border border-rose-900/70 overflow-hidden">
+            <div id="hud-hp-bar" class="h-full bg-gradient-to-r from-red-700 via-red-500 to-rose-400 transition-all duration-100" style="width:100%"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between text-sky-200/90 font-bold mb-0.5">
+            <span>✦ 霊力 MP</span>
+            <span id="hud-mp-text">70/70</span>
+          </div>
+          <div class="h-2 rounded-full bg-stone-950 border border-sky-900/70 overflow-hidden">
+            <div id="hud-mp-bar" class="h-full bg-gradient-to-r from-blue-700 via-sky-500 to-cyan-300 transition-all duration-100" style="width:100%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Partner & XP Bars -->
+      <div class="mt-1 grid grid-cols-2 gap-1.5 items-center text-[10px]">
+        <div id="partner-hp-wrap" class="flex items-center gap-1">
+          <span id="hud-partner-label" class="text-emerald-300 font-bold truncate">★ ラム</span>
+          <div class="flex-1 h-1.5 rounded-full bg-stone-950 border border-emerald-900/60 overflow-hidden">
+            <div id="hud-partner-bar" class="h-full bg-gradient-to-r from-emerald-600 to-lime-400 transition-all duration-100" style="width:100%"></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1">
+          <span class="text-amber-300/90 font-bold shrink-0">XP</span>
+          <div class="flex-1 h-1.5 rounded-full bg-stone-950 border border-amber-900/60 overflow-hidden">
+            <div id="hud-xp-bar" class="h-full bg-gradient-to-r from-amber-600 to-yellow-300 transition-all duration-100" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Boss HP Bar -->
+      <div id="boss-hud" class="hidden mt-1.5 pt-1 border-t border-red-500/45">
+        <div class="flex justify-between items-center text-[10px] font-black text-amber-300 mb-0.5">
+          <span id="boss-name-label">★ BOSS</span>
+          <span id="boss-hp-label">100%</span>
+        </div>
+        <div class="h-2.5 rounded-full bg-stone-950 border border-red-500/75 overflow-hidden">
+          <div id="boss-hp-bar" class="h-full bg-gradient-to-r from-red-800 via-red-500 to-amber-400 transition-all duration-100" style="width:100%"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ==================== MAIN STAGE AREA ==================== -->
+    <main class="relative flex-1 min-h-0 w-full overflow-hidden">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Toast Notification -->
+      <div id="toast-banner" class="pointer-events-none hidden absolute top-2 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-black/90 border border-amber-400/75 text-[11px] font-bold text-amber-200 shadow-lg whitespace-nowrap max-w-[92%] truncate"></div>
+
+      <!-- Exploration Objective & Combo Pill -->
+      <div id="stage-status-pill" class="pointer-events-none hidden absolute top-9 left-2 right-2 z-10 flex items-center justify-between gap-1.5 text-[10px]">
+        <span id="stage-objective-text" class="px-2 py-0.5 rounded bg-black/78 border border-amber-500/35 text-amber-100 truncate">群れを討伐し、北方ゲートへ進め！</span>
+        <span id="stage-combo-badge" class="hidden px-2 py-0.5 rounded bg-red-950/90 border border-amber-400/75 text-amber-300 font-black shrink-0">0 COMBO!</span>
+      </div>
+
+      <!-- In-Battle Character Banter (Strictly Ataru & Active Partner(s) only) -->
+      <div id="battle-banter" class="pointer-events-none hidden absolute bottom-2 left-2.5 right-2.5 z-20 flex items-center gap-2 p-2 rounded-xl bg-black/92 border border-amber-500/60 shadow-xl">
+        <canvas id="banter-portrait" width="46" height="46" class="rounded-lg border border-amber-400/55 bg-stone-900 shrink-0"></canvas>
+        <div class="min-w-0 flex-1">
+          <div id="banter-speaker" class="text-[10px] font-black text-amber-300">ラム</div>
+          <div id="banter-text" class="text-[11px] leading-snug text-amber-50"></div>
+        </div>
+      </div>
+
+      <!-- ==================== TITLE SCREEN: 「Diablo II: うる星やつら」 ==================== -->
+      <section id="screen-title" class="absolute inset-0 z-30 flex flex-col justify-between p-3.5 overflow-y-auto custom-scroll bg-gradient-to-b from-[#1c0609]/95 via-[#0b080e]/94 to-[#060508]/98">
+        <div class="text-center pt-0.5">
+          <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-red-950/90 border border-amber-500/55 text-[10px] tracking-widest text-amber-300 font-black mb-1">
+            <span>⚔️</span>
+            <span>DARK SANCTUARY ACTION RPG</span>
+            <span>⚡</span>
+          </div>
+          <h1 class="font-gothic text-[22px] leading-tight font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-400 to-red-600 drop-shadow">
+            Diablo II: うる星やつら
+          </h1>
+          <p class="text-[10px] text-amber-100/80 mt-0.5 tracking-wider">
+            暗黒の聖域と友引の宿命 — 3つのルートと真の闇
+          </p>
+        </div>
+
+        <!-- Animated Title Banner Canvas + Clear History -->
+        <div class="my-1.5 flex flex-col items-center">
+          <canvas id="title-banner-canvas" width="310" height="146" class="w-full max-w-[310px] h-[146px] rounded-2xl border border-amber-500/50 bg-stone-950 shadow-2xl"></canvas>
+
+          <div id="title-clear-history" class="mt-2 w-full rounded-xl bg-stone-950/88 border border-amber-500/35 p-2">
+            <div class="flex items-center justify-between text-[10px] font-bold text-amber-300 mb-1">
+              <span>🏆 クリア履歴 (3ルート制覇で真のラスボス解放)</span>
+              <span id="title-clear-count" class="text-amber-200">0 / 3</span>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 text-[10px]">
+              <div id="badge-clear-lum" class="px-2 py-1 rounded-lg bg-stone-900 border border-stone-700 text-center font-bold text-stone-400">
+                ⚡ ラム編: 未達
+              </div>
+              <div id="badge-clear-shinobu" class="px-2 py-1 rounded-lg bg-stone-900 border border-stone-700 text-center font-bold text-stone-400">
+                💥 しのぶ編: 未達
+              </div>
+              <div id="badge-clear-ran" class="px-2 py-1 rounded-lg bg-stone-900 border border-stone-700 text-center font-bold text-stone-400">
+                🌙 ラン編: 未達
+              </div>
+            </div>
+            <div id="badge-true-clear" class="mt-1.5 px-2 py-1 rounded-lg bg-purple-950/45 border border-purple-500/35 text-center text-[10px] font-black text-purple-200/80">
+              🌑 真のラスボス「ダーク・あたる」: 3ヒロイン制覇で出現
+            </div>
+          </div>
+        </div>
+
+        <!-- Primary & Secondary CTAs -->
+        <div class="space-y-1.5 pb-0.5">
+          <button id="btn-start-new" class="d2-btn d2-btn-crimson w-full py-2.5 rounded-xl font-black text-sm tracking-wider shadow-lg">
+            ⚔️ 冒険を始める（ヒロイン選択）
+          </button>
+          <button id="btn-true-boss-direct" class="hidden d2-btn d2-btn-true w-full py-2.5 rounded-xl font-black text-xs tracking-wider">
+            🌑 真のラスボス戦：ダーク・あたる（3ヒロイン同行）
+          </button>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button id="btn-continue-latest" class="d2-btn py-2 rounded-xl font-bold text-xs">
+              ▶ 続きから再開
+            </button>
+            <button id="btn-open-saves-title" class="d2-btn py-2 rounded-xl font-bold text-xs">
+              💾 セーブ / 履歴管理
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== PARTNER SELECTION SCREEN ==================== -->
+      <section id="screen-partner" class="hidden absolute inset-0 z-30 flex flex-col justify-between p-3 d2-panel overflow-y-auto custom-scroll">
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <button id="btn-back-title" class="d2-btn px-2.5 py-1 rounded-lg text-[11px] font-bold">← タイトル</button>
+            <span class="text-[11px] font-bold text-amber-300">相棒ヒロイン選択（プレイスタイル変化）</span>
+          </div>
+          <h2 class="text-center font-black text-sm text-amber-200">誰とサンクチュアリを駆け抜ける？</h2>
+          <p class="text-center text-[10px] text-stone-300 mt-0.5 leading-snug">
+            選んだ相棒で<span class="text-amber-300 font-bold">あたるの技・戦法・フィールド・中ボス</span>が変化し、
+            <span class="text-rose-300 font-bold">最終決戦では相棒自身がラスボスとして立ちはだかります</span>！
+          </p>
+        </div>
+
+        <div id="partner-cards" class="my-2 space-y-2"></div>
+
+        <button id="btn-confirm-partner" class="d2-btn d2-btn-crimson w-full py-2.5 rounded-xl font-black text-xs tracking-wider">
+          この相棒と物語を始める →
+        </button>
+      </section>
+
+      <!-- ==================== STORY / OPENING / BOSS / ENDING SCREEN ==================== -->
+      <section id="screen-story" class="hidden absolute inset-0 z-30 flex flex-col justify-between p-3.5 bg-gradient-to-b from-stone-950/96 via-black/92 to-stone-950/98">
+        <div class="flex items-center justify-between text-[11px]">
+          <span id="story-chapter-tag" class="px-2.5 py-0.5 rounded-full bg-amber-950/85 border border-amber-500/50 text-amber-300 font-bold">PROLOGUE</span>
+          <button id="btn-skip-story" class="d2-btn px-2.5 py-1 rounded-lg text-[10px] font-bold text-stone-200">スキップ ⏭</button>
+        </div>
+
+        <div class="my-auto flex flex-col items-center">
+          <div class="flex flex-col items-center">
+            <canvas id="story-portrait-canvas" width="144" height="144" class="rounded-2xl border-2 border-amber-400/75 bg-stone-900 shadow-2xl"></canvas>
+            <div id="story-speaker-badge" class="mt-2 px-3 py-0.5 rounded-full bg-amber-950/90 border border-amber-400/55 text-xs font-black text-amber-200">
+              語り部
+            </div>
+          </div>
+
+          <div class="mt-3 w-full rounded-2xl d2-panel p-3.5 min-h-[124px] flex flex-col justify-between">
+            <p id="story-dialogue-text" class="text-[13px] leading-relaxed text-amber-50 font-medium"></p>
+            <div class="mt-2 flex justify-between items-center text-[10px] text-amber-300/75">
+              <span id="story-progress-text">1 / 1</span>
+              <span>タップまたは「次へ」で進行</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-next-story" class="d2-btn d2-btn-crimson w-full py-3 rounded-xl font-black text-sm tracking-wider">
+          次へ ▶
+        </button>
+      </section>
+
+      <!-- ==================== INVENTORY / GEAR / CHARMS / SAVE & HISTORY MODAL ==================== -->
+      <section id="screen-overlay-menu" class="hidden absolute inset-0 z-40 flex flex-col p-3 d2-panel">
+        <div class="flex items-center justify-between pb-2 border-b border-amber-500/30">
+          <div class="flex gap-1">
+            <button data-tab="gear" class="overlay-tab-btn d2-btn px-2 py-1 rounded-lg text-[11px] font-bold is-active">装備/袋</button>
+            <button data-tab="charms" class="overlay-tab-btn d2-btn px-2 py-1 rounded-lg text-[11px] font-bold">護符/ルーン</button>
+            <button data-tab="saves" class="overlay-tab-btn d2-btn px-2 py-1 rounded-lg text-[11px] font-bold">セーブ/履歴</button>
+          </div>
+          <button id="btn-close-menu" class="d2-btn d2-btn-crimson px-2.5 py-1 rounded-lg text-[11px] font-bold">✕ 閉じる</button>
+        </div>
+
+        <div id="overlay-tab-content" class="flex-1 min-h-0 overflow-y-auto custom-scroll py-2.5 space-y-2.5 text-xs"></div>
+      </section>
+    </main>
+
+    <!-- ==================== BOTTOM CONTROLS (SAFE FOR MOBILE BROWSERS + PC KEY GUIDE) ==================== -->
+    <footer id="combat-controls" class="hidden shrink-0 z-20 d2-panel px-2 pt-1.5 pb-2 border-t border-amber-500/40">
+      <div class="flex items-center justify-between gap-2">
+        <!-- Virtual D-Pad for Touch -->
+        <div class="grid grid-cols-3 gap-1 w-[104px] h-[104px] shrink-0">
+          <div></div>
+          <button data-dir="up" class="dpad-btn d2-btn rounded-lg font-black text-sm flex items-center justify-center">▲</button>
+          <div></div>
+          <button data-dir="left" class="dpad-btn d2-btn rounded-lg font-black text-sm flex items-center justify-center">◀</button>
+          <div class="rounded-lg bg-stone-950/85 border border-amber-500/20 flex items-center justify-center text-[9px] text-amber-300/75 font-bold">移動</div>
+          <button data-dir="right" class="dpad-btn d2-btn rounded-lg font-black text-sm flex items-center justify-center">▶</button>
+          <div></div>
+          <button data-dir="down" class="dpad-btn d2-btn rounded-lg font-black text-sm flex items-center justify-center">▼</button>
+          <div></div>
+        </div>
+
+        <!-- Action & Skill Buttons -->
+        <div class="flex-1 flex flex-col justify-between gap-1.5">
+          <div class="grid grid-cols-3 gap-1.5">
+            <button id="btn-act-atk" class="d2-btn d2-btn-crimson py-2 rounded-xl font-black text-[11px] flex flex-col items-center leading-tight">
+              <span>⚔️ 正面斬撃</span>
+              <span class="text-[9px] text-amber-200/80">[Space/J/Z]</span>
+            </button>
+            <button id="btn-act-sk1" class="d2-btn py-2 rounded-xl font-black text-[11px] flex flex-col items-center leading-tight">
+              <span id="label-sk1">⚡ 電撃スパーク</span>
+              <span class="text-[9px] text-sky-300">12MP [K/X/1]</span>
+            </button>
+            <button id="btn-act-sk2" class="d2-btn py-2 rounded-xl font-black text-[11px] flex flex-col items-center leading-tight">
+              <span id="label-sk2">⚡ 雷神ラッシュ</span>
+              <span class="text-[9px] text-orange-300">20MP [L/C/2]</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5">
+            <button id="btn-pot-hp" class="d2-btn py-1.5 rounded-lg text-[10px] font-bold">
+              🧪HP薬 <span id="cnt-pot-hp" class="text-rose-300">3</span> [H]
+            </button>
+            <button id="btn-pot-mp" class="d2-btn py-1.5 rounded-lg text-[10px] font-bold">
+              💧MP薬 <span id="cnt-pot-mp" class="text-sky-300">3</span> [M]
+            </button>
+            <button id="btn-dash" class="d2-btn py-1.5 rounded-lg text-[10px] font-bold">
+              💨回避 [Shift]
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clear On-Screen PC Key Legend -->
+      <div class="mt-1.5 pt-1 border-t border-stone-800/90 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-[9px] text-stone-300/90">
+        <span><strong class="text-amber-300">WASD/矢印</strong>: 移動</span>
+        <span><strong class="text-amber-300">J/Z/Space</strong>: 斬撃</span>
+        <span><strong class="text-amber-300">K/X/1</strong>: 技1</span>
+        <span><strong class="text-amber-300">L/C/2</strong>: 技2</span>
+        <span><strong class="text-amber-300">Shift</strong>: 回避</span>
+        <span><strong id="key-legend-style" class="text-purple-300">H/M</strong>: HP/MP薬</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    'use strict';
+
+    // =========================================================================
+    // 1. WEB AUDIO API PROCEDURAL SFX & AMBIENT PULSE ENGINE
+    // =========================================================================
+    const SoundEngine = (() => {
+      let ctx = null;
+      let muted = false;
+      let bgmTimer = null;
+      let bgmStep = 0;
+
+      function ensureCtx() {
+        if (!ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) ctx = new AC();
+        }
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(() => {});
+        }
+        return ctx;
+      }
+
+      function playTone(freq, type = 'triangle', dur = 0.14, gainPeak = 0.11, slideTo = null, delay = 0) {
+        if (muted) return;
+        const c = ensureCtx();
+        if (!c) return;
+        try {
+          const now = c.currentTime + delay;
+          const osc = c.createOscillator();
+          const gain = c.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, now);
+          if (slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(28, slideTo), now + dur);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.linearRampToValueAtTime(gainPeak, now + 0.012);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+          osc.connect(gain);
+          gain.connect(c.destination);
+          osc.start(now);
+          osc.stop(now + dur + 0.02);
+        } catch (_) {}
+      }
+
+      function playNoise(dur = 0.12, gainPeak = 0.12, filterFreq = 900) {
+        if (muted) return;
+        const c = ensureCtx();
+        if (!c) return;
+        try {
+          const len = Math.max(1, Math.floor(c.sampleRate * dur));
+          const buf = c.createBuffer(1, len, c.sampleRate);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) {
+            data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+          }
+          const src = c.createBufferSource();
+          src.buffer = buf;
+
+          const filter = c.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(filterFreq, c.currentTime);
+
+          const gain = c.createGain();
+          gain.gain.setValueAtTime(gainPeak, c.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+
+          src.connect(filter);
+          filter.connect(gain);
+          gain.connect(c.destination);
+          src.start();
+        } catch (_) {}
+      }
+
+      function startBgm(mode = 'combat') {
+        stopBgm();
+        if (muted) return;
+        const scale = mode === 'trueboss'
+          ? [82.41, 98.0, 110.0, 123.47, 146.83, 123.47, 110.0, 92.5]
+          : mode === 'boss'
+            ? [110, 130.81, 146.83, 164.81, 196, 164.81, 146.83, 123.47]
+            : [98, 110, 130.81, 146.83, 130.81, 110, 87.31, 98];
+
+        bgmTimer = setInterval(() => {
+          if (muted || !ctx || ctx.state !== 'running') return;
+          const note = scale[bgmStep % scale.length];
+          playTone(note, mode === 'combat' ? 'triangle' : 'sawtooth', 0.2, mode === 'combat' ? 0.028 : 0.038);
+          if (bgmStep % 4 === 2) {
+            playTone(note * 2, 'sine', 0.14, 0.02);
+          }
+          bgmStep++;
+        }, mode === 'trueboss' ? 195 : mode === 'boss' ? 230 : 295);
+      }
+
+      function stopBgm() {
+        if (bgmTimer) {
+          clearInterval(bgmTimer);
+          bgmTimer = null;
+        }
+      }
+
+      function toggleMute() {
+        muted = !muted;
+        if (muted) {
+          stopBgm();
+        } else {
+          ensureCtx();
+          startBgm(GameState.trueBossMode ? 'trueboss' : (GameState.bossActive ? 'boss' : 'combat'));
+        }
+        return muted;
+      }
+
+      return {
+        ensureCtx,
+        toggleMute,
+        isMuted: () => muted,
+        startBgm,
+        stopBgm,
+        sfx: {
+          slash: () => { playNoise(0.065, 0.13, 2200); playTone(410, 'triangle', 0.075, 0.09, 145); },
+          heavyHit: () => { playNoise(0.14, 0.16, 480); playTone(130, 'sawtooth', 0.15, 0.12, 52); },
+          // Lum Style SFX
+          lumSpark: () => { playTone(1320, 'sawtooth', 0.12, 0.11, 420); playNoise(0.1, 0.12, 3400); playTone(880, 'square', 0.08, 0.06, 1360, 0.04); },
+          lumRush: () => { playTone(260, 'sawtooth', 0.24, 0.14, 1120); playNoise(0.16, 0.14, 2600); playTone(140, 'square', 0.2, 0.09, 55, 0.08); },
+          // Shinobu Style SFX
+          shinobuHammer: () => { playTone(125, 'sawtooth', 0.24, 0.16, 38); playNoise(0.18, 0.18, 320); },
+          shinobuGale: () => { playNoise(0.16, 0.15, 1150); playTone(220, 'triangle', 0.18, 0.12, 74); playTone(110, 'square', 0.14, 0.08, 46, 0.05); },
+          // Ran Style SFX
+          ranTrap: () => { playTone(980, 'sine', 0.09, 0.09, 1480); playTone(520, 'triangle', 0.14, 0.08, 220, 0.05); },
+          ranBarrage: () => { playTone(1240, 'triangle', 0.07, 0.08, 620, 0); playTone(1480, 'triangle', 0.07, 0.08, 740, 0.05); playTone(1720, 'sine', 0.09, 0.08, 880, 0.1); },
+          // General / Boss SFX
+          dash: () => { playTone(320, 'sine', 0.11, 0.08, 640); },
+          pickup: () => { playTone(587.33, 'triangle', 0.09, 0.09, null, 0); playTone(880, 'triangle', 0.14, 0.1, null, 0.07); },
+          runeDrop: () => { playTone(523.25, 'sine', 0.12, 0.1, null, 0); playTone(659.25, 'sine', 0.12, 0.1, null, 0.08); playTone(783.99, 'sine', 0.18, 0.11, null, 0.16); },
+          levelUp: () => { [440, 554.37, 659.25, 880].forEach((f, idx) => playTone(f, 'triangle', 0.18, 0.11, null, idx * 0.08)); },
+          hurt: () => { playTone(165, 'sawtooth', 0.16, 0.13, 72); },
+          bossWarn: () => {
+            playTone(110, 'sawtooth', 0.36, 0.15, 65.41, 0);
+            playTone(92.5, 'sawtooth', 0.42, 0.16, 55.0, 0.36);
+          },
+          trueBossPulse: () => {
+            playTone(65.41, 'sawtooth', 0.32, 0.17, 36.7);
+            playTone(196, 'square', 0.16, 0.08, 98, 0.08);
+          },
+          uiClick: () => { playTone(660, 'triangle', 0.06, 0.07, 740); }
+        }
+      };
+    })();
+
+    // =========================================================================
+    // 2. EXPRESSIVE ANIME CHARACTER PORTRAIT & FIELD SPRITE RENDERER
+    // =========================================================================
+    const CharacterArt = (() => {
+      const PALETTES = {
+        ataru: { hair: '#2b211b', skin: '#f6d5bc', eye: '#3b2416', outfit: '#1e293b', accent: '#f59e0b', style: 'ataru' },
+        dark_ataru: { hair: '#09070d', skin: '#c4b5fd', eye: '#ef4444', outfit: '#18092b', accent: '#a855f7', style: 'dark_ataru' },
+        lum: { hair: '#58d68d', skin: '#fbe0ca', eye: '#16a34a', outfit: '#eab308', accent: '#18181b', style: 'lum' },
+        shinobu: { hair: '#8d5536', skin: '#fde2ce', eye: '#6d28d9', outfit: '#1e3a8a', accent: '#f43f5e', style: 'shinobu' },
+        ran: { hair: '#d97757', skin: '#fde3cf', eye: '#be185d', outfit: '#fbcfe8', accent: '#db2777', style: 'ran' },
+        oyuki: { hair: '#1e293b', skin: '#f1f5f9', eye: '#0284c7', outfit: '#0ea5e9', accent: '#e0f2fe', style: 'oyuki' },
+        benten: { hair: '#b91c1c', skin: '#f8d2b6', eye: '#ea580c', outfit: '#292524', accent: '#f97316', style: 'benten' },
+        kurama: { hair: '#1f1635', skin: '#f9dcc8', eye: '#9333ea', outfit: '#581c87', accent: '#facc15', style: 'kurama' },
+        sakura: { hair: '#5c3a28', skin: '#fbe0ca', eye: '#9f1239', outfit: '#f8fafc', accent: '#dc2626', style: 'sakura' }
+      };
+
+      function drawPortrait(ctx, charId, expr = 'normal', w = 144, h = 144) {
+        const p = PALETTES[charId] || PALETTES.ataru;
+        ctx.clearRect(0, 0, w, h);
+
+        const bgGrad = ctx.createRadialGradient(w * 0.5, h * 0.35, 8, w * 0.5, h * 0.5, w * 0.78);
+        bgGrad.addColorStop(0, p.accent + '4a');
+        bgGrad.addColorStop(1, '#09080c');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        const cx = w * 0.5;
+        const cy = h * 0.55;
+        const s = w / 140;
+
+        ctx.fillStyle = p.hair;
+        if (p.style === 'oyuki' || p.style === 'kurama' || p.style === 'sakura') {
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + 16 * s, 34 * s, 44 * s, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.style === 'shinobu') {
+          ctx.beginPath();
+          ctx.ellipse(cx - 32 * s, cy + 10 * s, 11 * s, 28 * s, 0.2, 0, Math.PI * 2);
+          ctx.ellipse(cx + 32 * s, cy + 10 * s, 11 * s, 28 * s, -0.2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.style === 'ran') {
+          ctx.beginPath();
+          ctx.arc(cx - 28 * s, cy - 12 * s, 16 * s, 0, Math.PI * 2);
+          ctx.arc(cx + 28 * s, cy - 12 * s, 16 * s, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        if (p.style === 'lum') {
+          ctx.fillStyle = '#fef9c3';
+          ctx.beginPath();
+          ctx.ellipse(cx - 26 * s, cy + 28 * s, 14 * s, 7 * s, -0.4, 0, Math.PI * 2);
+          ctx.ellipse(cx + 26 * s, cy + 28 * s, 14 * s, 7 * s, 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = p.outfit;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 44 * s, 38 * s, 22 * s, 0, Math.PI, 0);
+        ctx.fill();
+
+        if (p.style === 'lum') {
+          ctx.strokeStyle = p.accent;
+          ctx.lineWidth = 3 * s;
+          ctx.beginPath();
+          ctx.moveTo(cx - 22 * s, cy + 32 * s); ctx.lineTo(cx - 10 * s, cy + 36 * s);
+          ctx.moveTo(cx + 10 * s, cy + 36 * s); ctx.lineTo(cx + 22 * s, cy + 32 * s);
+          ctx.stroke();
+        } else if (p.style === 'sakura') {
+          ctx.fillStyle = '#dc2626';
+          ctx.fillRect(cx - 24 * s, cy + 34 * s, 48 * s, 18 * s);
+        } else if (p.style === 'dark_ataru') {
+          ctx.strokeStyle = '#a855f7';
+          ctx.lineWidth = 2.5 * s;
+          ctx.strokeRect(cx - 28 * s, cy + 26 * s, 56 * s, 16 * s);
+        }
+
+        ctx.fillStyle = p.skin;
+        ctx.fillRect(cx - 7 * s, cy + 16 * s, 14 * s, 14 * s);
+        ctx.beginPath();
+        ctx.ellipse(cx, cy - 2 * s, 25 * s, 27 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (p.style === 'lum') {
+          ctx.fillStyle = '#facc15';
+          ctx.strokeStyle = '#713f12';
+          ctx.lineWidth = 1.5 * s;
+          ctx.beginPath();
+          ctx.moveTo(cx - 13 * s, cy - 24 * s); ctx.lineTo(cx - 19 * s, cy - 40 * s); ctx.lineTo(cx - 6 * s, cy - 27 * s);
+          ctx.closePath();
+          ctx.fill(); ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(cx + 13 * s, cy - 24 * s); ctx.lineTo(cx + 19 * s, cy - 40 * s); ctx.lineTo(cx + 6 * s, cy - 27 * s);
+          ctx.closePath();
+          ctx.fill(); ctx.stroke();
+        }
+
+        const eyeY = cy - 1 * s;
+        const eyeOffset = 10.5 * s;
+        if (expr === 'sad' || expr === 'cry') {
+          ctx.strokeStyle = p.eye;
+          ctx.lineWidth = 2.4 * s;
+          ctx.beginPath();
+          ctx.moveTo(cx - eyeOffset - 5 * s, eyeY + 2 * s); ctx.lineTo(cx - eyeOffset + 5 * s, eyeY - 2 * s);
+          ctx.moveTo(cx + eyeOffset - 5 * s, eyeY - 2 * s); ctx.lineTo(cx + eyeOffset + 5 * s, eyeY + 2 * s);
+          ctx.stroke();
+          if (expr === 'cry') {
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(cx - eyeOffset - 2 * s, eyeY + 2 * s, 3 * s, 10 * s);
+            ctx.fillRect(cx + eyeOffset - 1 * s, eyeY + 2 * s, 3 * s, 10 * s);
+          }
+        } else {
+          [-1, 1].forEach((side) => {
+            const ex = cx + side * eyeOffset;
+            ctx.fillStyle = p.style === 'dark_ataru' ? '#1e0b36' : '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(ex, eyeY, 5.5 * s, 6.2 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = p.eye;
+            ctx.beginPath();
+            ctx.arc(ex, eyeY + 0.5 * s, 3.6 * s, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (p.style !== 'dark_ataru') {
+              ctx.fillStyle = '#ffffff';
+              ctx.beginPath();
+              ctx.arc(ex - 1.4 * s, eyeY - 1.5 * s, 1.5 * s, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          });
+        }
+
+        ctx.strokeStyle = p.style === 'dark_ataru' ? '#a855f7' : p.hair;
+        ctx.lineWidth = 2.2 * s;
+        const browTilt = (expr === 'angry' || expr === 'boss' || p.style === 'dark_ataru') ? 3.5 * s : -1.5 * s;
+        ctx.beginPath();
+        ctx.moveTo(cx - 15 * s, eyeY - 8 * s - browTilt); ctx.lineTo(cx - 5 * s, eyeY - 8 * s + browTilt);
+        ctx.moveTo(cx + 5 * s, eyeY - 8 * s + browTilt); ctx.lineTo(cx + 15 * s, eyeY - 8 * s - browTilt);
+        ctx.stroke();
+
+        ctx.strokeStyle = p.style === 'dark_ataru' ? '#f43f5e' : '#7f1d1d';
+        ctx.lineWidth = 2 * s;
+        ctx.beginPath();
+        if (expr === 'happy' || expr === 'smirk') {
+          ctx.arc(cx, eyeY + 11 * s, 5 * s, 0.1 * Math.PI, 0.9 * Math.PI);
+        } else if (expr === 'angry' || expr === 'boss' || p.style === 'dark_ataru') {
+          ctx.moveTo(cx - 5 * s, eyeY + 13 * s); ctx.lineTo(cx + 5 * s, eyeY + 11 * s);
+        } else {
+          ctx.arc(cx, eyeY + 12 * s, 3.5 * s, 0, Math.PI);
+        }
+        ctx.stroke();
+
+        ctx.fillStyle = p.hair;
+        ctx.beginPath();
+        ctx.arc(cx, cy - 7 * s, 26.5 * s, Math.PI * 0.95, Math.PI * 2.05);
+        ctx.lineTo(cx + 25 * s, cy - 8 * s);
+        ctx.lineTo(cx + 12 * s, cy - 15 * s);
+        ctx.lineTo(cx, cy - 9 * s);
+        ctx.lineTo(cx - 13 * s, cy - 16 * s);
+        ctx.lineTo(cx - 25 * s, cy - 8 * s);
+        ctx.closePath();
+        ctx.fill();
+
+        if (expr === 'boss' || p.style === 'dark_ataru') {
+          ctx.strokeStyle = p.accent;
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(3, 3, w - 6, h - 6);
+        }
+      }
+
+      function drawFieldUnit(ctx, charId, x, y, r, timeSec, isBoss = false, flashed = false, aimAngle = 0) {
+        const p = PALETTES[charId] || PALETTES.ataru;
+        const bob = Math.sin(timeSec * 8 + x * 0.05) * 2.2;
+
+        ctx.save();
+        ctx.translate(x, y);
+
+        // Facing pointer indicator for player Ataru
+        if (charId === 'ataru') {
+          ctx.save();
+          ctx.rotate(aimAngle);
+          ctx.fillStyle = 'rgba(250, 204, 21, 0.72)';
+          ctx.beginPath();
+          ctx.moveTo(r + 12, 0);
+          ctx.lineTo(r + 4, -5);
+          ctx.lineTo(r + 4, 5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+        ctx.beginPath();
+        ctx.ellipse(0, r * 0.85, r * 0.95, r * 0.42, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (isBoss) {
+          ctx.strokeStyle = p.accent;
+          ctx.lineWidth = 2.8;
+          ctx.beginPath();
+          ctx.arc(0, bob, r + 7 + Math.sin(timeSec * 7) * 2.5, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = flashed ? '#ffffff' : p.outfit;
+        ctx.strokeStyle = '#09090b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, bob + 4, r * 0.76, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = flashed ? '#ffffff' : p.skin;
+        ctx.beginPath();
+        ctx.arc(0, bob - r * 0.45, r * 0.65, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = flashed ? '#ffffff' : p.hair;
+        ctx.beginPath();
+        ctx.arc(0, bob - r * 0.62, r * 0.66, Math.PI, 0);
+        ctx.fill();
+
+        if (p.style === 'lum') {
+          ctx.fillStyle = '#facc15';
+          ctx.beginPath();
+          ctx.moveTo(-6, bob - r * 1.0); ctx.lineTo(-9, bob - r * 1.45); ctx.lineTo(-2, bob - r * 1.05);
+          ctx.closePath();
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(6, bob - r * 1.0); ctx.lineTo(9, bob - r * 1.45); ctx.lineTo(2, bob - r * 1.05);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.fillStyle = p.eye;
+        ctx.beginPath();
+        ctx.arc(-4, bob - r * 0.42, 1.9, 0, Math.PI * 2);
+        ctx.arc(4, bob - r * 0.42, 1.9, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      return { drawPortrait, drawFieldUnit };
+    })();
+
+    // =========================================================================
+    // 3. PARTNER STYLES, ROUTE FIELDS, MID-BOSSES, ITEMS & MONSTERS
+    // =========================================================================
+    const PARTNER_META = {
+      lum: {
+        id: 'lum',
+        name: 'ラム',
+        title: '電撃スタイル（電撃スパーク・雷神ラッシュ）',
+        sk1Name: '⚡ 電撃スパーク',
+        sk2Name: '⚡ 雷神ラッシュ',
+        roleDesc: '前方の電撃スパークと高速の雷神ラッシュで群れを感電・薙ぎ払う電撃スタイル！',
+        banterJoin: '「ダーリン！こんな闇の裂け目、うちがビリビリにしてやるだっちゃ！」',
+        banterCombat: [
+          '「ダーリン、後ろにも群れが湧いてるだっちゃ！一気に焦げちゃうだっちゃ！」',
+          '「電撃ショック〜っ！うちとダーリンなら無敵だっちゃ！」',
+          '「油断しないでだっちゃ！雷の力でまとめて吹っ飛ばすだっちゃ！」'
+        ]
+      },
+      shinobu: {
+        id: 'shinobu',
+        name: 'しのぶ',
+        title: '怪力破砕スタイル（怪力大槌・鉄拳烈風）',
+        sk1Name: '🔨 怪力大槌',
+        sk2Name: '💥 鉄拳烈風',
+        roleDesc: '前方に叩きつける怪力大槌と衝撃波を放つ鉄拳烈風で敵を粉砕する怪力破砕スタイル！',
+        banterJoin: '「あたる君、また勝手に変なとこへ引きずり込まれて…！もう、ほっとけないじゃない！」',
+        banterCombat: [
+          '「ちょっと！そこをどきなさいよぉっ！まとめて砕け散れーっ！」',
+          '「あたる君、下がってて！この怪力、見せてあげるんだから！」',
+          '「もう我慢の限界なんだからっ！！地面ごと揺らしてやるんだから！」'
+        ]
+      },
+      ran: {
+        id: 'ran',
+        name: 'ラン',
+        title: '奇策ガジェットスタイル（魔導トラップ・ラブリー弾幕）',
+        sk1Name: '💣 魔導トラップ',
+        sk2Name: '💖 ラブリー弾幕',
+        roleDesc: '敵が踏むと炸裂する魔導トラップと拡散するラブリー弾幕で戦場を制す奇策ガジェットスタイル！',
+        banterJoin: '「あたる〜♪ こんなところで会うなんて運命なの〜。でも魔物には容赦しないんだよ？」',
+        banterCombat: [
+          '「ふふっ、トラップにかかったなの♪ まとめてドカンといくの〜！」',
+          '「あたるのバカ〜！でも弾幕で援護してあげるの♪」',
+          '「甘くて危険なガジェットの力、味わいなさいなの！逃げられないよ♪」'
+        ]
+      }
+    };
+
+    const WORLD_W = 1280;
+    const WORLD_H = 1440;
+    const CLEAR_HISTORY_KEY = 'd2_urusei_clear_history_v1';
+    const SAVE_PREFIX = 'd2_urusei_save_slot_';
+
+    const ITEM_TEMPLATES = [
+      { id: 'w1', slot: 'weapon', rarity: 'common', name: '友引の古びた鉄剣', affix: '攻撃力 +8 / 会心率 +3%', atk: 8, crit: 0.03 },
+      { id: 'w2', slot: 'weapon', rarity: 'magic', name: '雷鳴の妖刀・虎徹', affix: '攻撃力 +18 / 会心率 +6%', atk: 18, crit: 0.06 },
+      { id: 'w3', slot: 'weapon', rarity: 'rare', name: 'サンクチュアリの魔断剣', affix: '攻撃力 +28 / 霊力MP +20', atk: 28, mp: 20 },
+      { id: 'w4', slot: 'weapon', rarity: 'unique', name: '【ユニーク】天駆ける悪運の刃', affix: '攻撃力 +42 / 撃破MP +3', atk: 42, mpOnKill: 3 },
+      { id: 'a1', slot: 'armor', rarity: 'common', name: '友引高校の破れ学ラン', affix: '防御力 +7 / 生命HP +20', def: 7, hp: 20 },
+      { id: 'a2', slot: 'armor', rarity: 'magic', name: '守護者の鎖帷子', affix: '防御力 +16 / 全耐性 +10', def: 16, res: 10 },
+      { id: 'a3', slot: 'armor', rarity: 'rare', name: '暗黒聖域の黒曜甲冑', affix: '防御力 +26 / 生命HP +55 / 全耐性 +14', def: 26, hp: 55, res: 14 },
+      { id: 'p1', slot: 'partnerGear', rarity: 'magic', name: '星詠みのリボン', affix: '相棒攻撃力 +14 / 全耐性 +8', partnerAtk: 14, res: 8 },
+      { id: 'p2', slot: 'partnerGear', rarity: 'rare', name: '鬼星王家の黄金装身具', affix: '相棒攻撃力 +25 / 攻撃力 +10', partnerAtk: 25, atk: 10 }
+    ];
+
+    const CHARM_POOL = [
+      { id: 'c1', rarity: 'charm', name: '【護符】友引の小さな御守', affix: '生命HP +30 / 攻撃力 +5', hp: 30, atk: 5 },
+      { id: 'c2', rarity: 'charm', name: '【護符】星屑の霊力チャーム', affix: '霊力MP +25 / 会心率 +5%', mp: 25, crit: 0.05 },
+      { id: 'c3', rarity: 'charm', name: '【護符】不屈の聖域チャーム', affix: '防御力 +12 / 全耐性 +12', def: 12, res: 12 }
+    ];
+
+    const RUNE_POOL = [
+      { id: 'r1', rarity: 'rune', name: '【ルーン】El（エル）', affix: '攻撃力 +7 / 防御力 +5', atk: 7, def: 5 },
+      { id: 'r2', rarity: 'rune', name: '【ルーン】Sol（ソル）', affix: '攻撃力 +15 / 相棒攻撃力 +10', atk: 15, partnerAtk: 10 },
+      { id: 'r3', rarity: 'rune', name: '【ルーン】Ber（ベル）', affix: '全耐性 +18 / 生命HP +60', res: 18, hp: 60 }
+    ];
+
+    const D2R_MONSTER_TYPES = [
+      { name: 'フォーレン', color: '#dc2626', r: 13, hp: 34, spd: 98, dmg: 9, xp: 14, gold: 12 },
+      { name: 'スケルトン剣士', color: '#cbd5e1', r: 14, hp: 46, spd: 90, dmg: 12, xp: 18, gold: 16 },
+      { name: 'ゴートマン', color: '#9a3412', r: 16, hp: 64, spd: 84, dmg: 15, xp: 24, gold: 22 },
+      { name: 'ゾンビ群れ', color: '#4d7c0f', r: 15, hp: 72, spd: 68, dmg: 14, xp: 22, gold: 18 },
+      { name: 'クイルラット', color: '#a16207', r: 13, hp: 52, spd: 106, dmg: 13, xp: 20, gold: 20 },
+      { name: 'ヴェノムロード', color: '#15803d', r: 17, hp: 92, spd: 96, dmg: 19, xp: 34, gold: 32 },
+      { name: 'オブリビオンナイト', color: '#6d28d9', r: 17, hp: 108, spd: 88, dmg: 22, xp: 40, gold: 38 }
+    ];
+
+    const ELITE_AFFIXES = [
+      { label: '【狂戦士】', color: '#f97316', multHp: 1.45, multDmg: 1.25 },
+      { label: '【電撃強化】', color: '#38bdf8', multHp: 1.4, multDmg: 1.3 },
+      { label: '【呪詛オーラ】', color: '#c084fc', multHp: 1.5, multDmg: 1.25 },
+      { label: '【血の群れ】', color: '#ef4444', multHp: 1.35, multDmg: 1.35 }
+    ];
+
+    function getRouteActConfig(partnerId, actNum) {
+      const routeThemes = {
+        lum: {
+          1: { badge: 'ACT 1', name: '雷鳴の荒れ地・友引外縁', propTheme: 'ruins', bg2: '#0a0f18', tileA: '#151f2e', tileB: '#111926', accent: '#38bdf8' },
+          2: { badge: 'ACT 2', name: '乾いた星砂の墓所', propTheme: 'desert', bg2: '#1a150a', tileA: '#2b2211', tileB: '#221b0d', accent: '#facc15' },
+          3: { badge: 'ACT 3', name: '翡翠の密林・鬼星回廊', propTheme: 'jungle', bg2: '#091710', tileA: '#11291c', tileB: '#0d2016', accent: '#4ade80' },
+          4: { badge: 'ACT 4', name: '溶岩の断層・閃光地獄', propTheme: 'hell', bg2: '#1f080a', tileA: '#330d11', tileB: '#27090c', accent: '#fb7185' },
+          5: { badge: 'ACT 5', name: '氷結の聖座・雷神の祭壇', propTheme: 'snow', bg2: '#0a1322', tileA: '#132238', tileB: '#0e1b2d', accent: '#fde047' }
+        },
+        shinobu: {
+          1: { badge: 'ACT 1', name: '血塗れの校庭・瓦礫荒野', propTheme: 'ruins', bg2: '#170d0b', tileA: '#291713', tileB: '#20120f', accent: '#fb923c' },
+          2: { badge: 'ACT 2', name: '砕岩の砂丘・巨石の谷', propTheme: 'desert', bg2: '#1c1208', tileA: '#2e1e0e', tileB: '#24170a', accent: '#f59e0b' },
+          3: { badge: 'ACT 3', name: '震える古樹の湿原', propTheme: 'jungle', bg2: '#10160c', tileA: '#1d2616', tileB: '#161e11', accent: '#a3e635' },
+          4: { badge: 'ACT 4', name: '怒髪業火の溶岩渓谷', propTheme: 'hell', bg2: '#210709', tileA: '#380c10', tileB: '#2b080c', accent: '#f43f5e' },
+          5: { badge: 'ACT 5', name: '凍てつく剛力の峰・聖座', propTheme: 'snow', bg2: '#121324', tileA: '#1e203b', tileB: '#17182e', accent: '#fda4af' }
+        },
+        ran: {
+          1: { badge: 'ACT 1', name: '黄昏の廃墟・怨念の道', propTheme: 'ruins', bg2: '#150b1c', tileA: '#261333', tileB: '#1d0e27', accent: '#e879f9' },
+          2: { badge: 'ACT 2', name: '蜃気楼の呪詛砂漠', propTheme: 'desert', bg2: '#1c111d', tileA: '#2e1b30', tileB: '#231425', accent: '#f472b6' },
+          3: { badge: 'ACT 3', name: '紫霧の妖精ジャングル', propTheme: 'jungle', bg2: '#0d151b', tileA: '#162530', tileB: '#111c25', accent: '#c084fc' },
+          4: { badge: 'ACT 4', name: '深紅の迷宮・逆恨み深淵', propTheme: 'hell', bg2: '#1f0717', tileA: '#360b28', tileB: '#29081e', accent: '#ec4899' },
+          5: { badge: 'ACT 5', name: '白銀の呪縛宮・最奥聖座', propTheme: 'snow', bg2: '#111426', tileA: '#1c213d', tileB: '#151930', accent: '#f0abfc' }
+        }
+      };
+      const map = routeThemes[partnerId] || routeThemes.lum;
+      return map[actNum] || map[1];
+    }
+
+    function getMidBossMeta(partnerId, actNum) {
+      // Mid-bosses from other Urusei Yatsura heroines/characters depending on route & Act
+      if (actNum === 2) {
+        return partnerId === 'shinobu'
+          ? { charId: 'lum', name: '【中ボス】雷雲の精霊ラム', color: '#facc15' }
+          : { charId: 'shinobu', name: '【中ボス】鉄拳怪力しのぶ', color: '#f43f5e' };
+      }
+      if (actNum === 4) {
+        return partnerId === 'ran'
+          ? { charId: 'oyuki', name: '【中ボス】氷晶の女王おユキ', color: '#38bdf8' }
+          : { charId: 'ran', name: '【中ボス】呪術ガジェット・ラン', color: '#e879f9' };
+      }
+      return null;
+    }
+
+    function getOpeningScript(partnerId) {
+      const pMeta = PARTNER_META[partnerId] || PARTNER_META.lum;
+      return [
+        { charId: 'ataru', expr: 'normal', speaker: '諸星あたる', text: '「ちっ、また変な暗黒の裂け目に迷い込んだのかよ…！サンクチュアリだかなんだか知らねえが、魔物だらけじゃねえか！」' },
+        { charId: partnerId, expr: 'happy', speaker: pMeta.name, text: pMeta.banterJoin },
+        { charId: 'ataru', expr: 'smirk', speaker: '諸星あたる', text: `「よし、${pMeta.name}！お前の力と俺のしぶとさで、この終わらない悪夢を切り抜けてやるぜ！」` }
+      ];
+    }
+
+    function getFinalBossScript(partnerId) {
+      if (partnerId === 'lum') {
+        return [
+          { charId: 'lum', expr: 'boss', speaker: 'ラム', text: '「…ごめんね、ダーリン。この聖域の核が、うちの雷と共鳴して止まらないだっちゃ…」' },
+          { charId: 'ataru', expr: 'sad', speaker: '諸星あたる', text: '「ラム…おい、冗談だろ！？本気で俺に電撃を撃つ気かよ！」' },
+          { charId: 'lum', expr: 'angry', speaker: '暴走雷神ラム', text: '「逃げないでだっちゃ！ダーリンをこの場所に閉じ込めてでも、うちが守るだっちゃ！！」' }
+        ];
+      }
+      if (partnerId === 'shinobu') {
+        return [
+          { charId: 'shinobu', expr: 'boss', speaker: 'しのぶ', text: '「もう限界よ、あたる君…！いつまでも危なっかしいことばかりして、私の気持ちも知らずに…！」' },
+          { charId: 'ataru', expr: 'sad', speaker: '諸星あたる', text: '「しのぶ…！？待てよ、その目つきは本気じゃねえか！」' },
+          { charId: 'shinobu', expr: 'angry', speaker: '怒髪剛力しのぶ', text: '「ここで叩きのめしてでも、絶対に逃がさないんだからっ！！」' }
+        ];
+      }
+      return [
+        { charId: 'ran', expr: 'boss', speaker: 'ラン', text: '「やっとここまで来たのね、あたる…♪ もう誰にも邪魔させないの〜！」' },
+        { charId: 'ataru', expr: 'sad', speaker: '諸星あたる', text: '「ラン！？お前まで聖域の闇に飲まれたのかよ！」' },
+        { charId: 'ran', expr: 'angry', speaker: '呪詛の女王ラン', text: '「ふふっ、甘くて苦い呪いの幕引きなの♪ 覚悟するんだよ〜！」' }
+      ];
+    }
+
+    function getPartnerEndingScript(partnerId) {
+      if (partnerId === 'lum') {
+        return [
+          { charId: 'lum', expr: 'cry', speaker: 'ラム', text: '「ダーリン…っ！うち、怖い夢を見てたみたいだっちゃ…！」' },
+          { charId: 'ataru', expr: 'happy', speaker: '諸星あたる', text: '「バカだな、もう大丈夫だ。ほら、ここへ来いよラム。」' },
+          { charId: 'lum', expr: 'happy', speaker: 'ラム', text: '「ダーリン…！大好きだっちゃ！これからもずっと、一緒だっちゃ…！」' }
+        ];
+      }
+      if (partnerId === 'shinobu') {
+        return [
+          { charId: 'shinobu', expr: 'cry', speaker: 'しのぶ', text: '「…ひどいよ、あたる君。最後まで私を置いていこうとするんだもん…」' },
+          { charId: 'ataru', expr: 'happy', speaker: '諸星あたる', text: '「悪かったよ、しのぶ。お前がいてくれたから、ここまで来られたんだ。」' },
+          { charId: 'shinobu', expr: 'happy', speaker: 'しのぶ', text: '「…うん。今度は、ちゃんと隣で歩いてね、あたる君。」' }
+        ];
+      }
+      return [
+        { charId: 'ran', expr: 'cry', speaker: 'ラン', text: '「あたる…っ！あたしのわがまま、許してくれるの…？」' },
+        { charId: 'ataru', expr: 'happy', speaker: '諸星あたる', text: '「お前のその強情さも、嫌いじゃねえよ、ラン。」' },
+        { charId: 'ran', expr: 'happy', speaker: 'ラン', text: '「ほんと…？うわーん、あたる大好き〜っ！！」' }
+      ];
+    }
+
+    function getTrueBossIntroScript() {
+      return [
+        { charId: 'dark_ataru', expr: 'boss', speaker: 'ダーク・あたる', text: '「愚かな弱者どもが、深淵の底まで這いずり来たか…！」' },
+        { charId: 'lum', expr: 'angry', speaker: 'ラム', text: '「あたるが二人いるだっちゃ…！でもうちたちのダーリンは、この眼の前のあたるだけだっちゃ！」' },
+        { charId: 'shinobu', expr: 'angry', speaker: 'しのぶ', text: '「闇に堕ちた偽物なんて、三人そろって粉々にしてやるんだから！」' },
+        { charId: 'ran', expr: 'angry', speaker: 'ラン', text: '「あたしのあたるを汚す闇は、絶対に許さないの〜！」' },
+        { charId: 'ataru', expr: 'smirk', speaker: '諸星あたる', text: '「ラム、しのぶ、ラン！最高の相棒たちが揃ったぜ！闇の俺を超えてみせる！」' }
+      ];
+    }
+
+    function getTrueEndingScript() {
+      return [
+        { charId: 'dark_ataru', expr: 'sad', speaker: 'ダーク・あたる', text: '「…ばかな。この深淵の力と絶望を、こんな眩しい絆が打ち砕くというのか…」' },
+        { charId: 'lum', expr: 'happy', speaker: 'ラム', text: '「勝っただっちゃーっ！ダーリン、最高にかっこよかっただっちゃ！」' },
+        { charId: 'shinobu', expr: 'happy', speaker: 'しのぶ', text: '「はぁ…疲れたけど、なんだかすごく清々しいわ、あたる君。」' },
+        { charId: 'ran', expr: 'happy', speaker: 'ラン', text: '「みんな一緒で勝てたなんて、最高のハッピーエンドなの〜♪」' },
+        { charId: 'ataru', expr: 'happy', speaker: '諸星あたる', text: '「ああ、どんな闇が来ようと、俺たちなら絶対に負けない。友引の夜は、まだこれからだ！」' }
+      ];
+    }
+
+    function loadClearHistory() {
+      try {
+        const raw = localStorage.getItem(CLEAR_HISTORY_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return {
+          lum: Boolean(parsed.lum),
+          shinobu: Boolean(parsed.shinobu),
+          ran: Boolean(parsed.ran),
+          trueBoss: Boolean(parsed.trueBoss)
+        };
+      } catch (_) {
+        return { lum: false, shinobu: false, ran: false, trueBoss: false };
+      }
+    }
+
+    function saveClearHistory(hist) {
+      try {
+        localStorage.setItem(CLEAR_HISTORY_KEY, JSON.stringify(hist));
+      } catch (_) {}
+    }
+
+    function recordRouteClear(partnerId) {
+      const h = loadClearHistory();
+      if (partnerId === 'lum' || partnerId === 'shinobu' || partnerId === 'ran') {
+        h[partnerId] = true;
+      }
+      saveClearHistory(h);
+      refreshTitleClearBadges();
+    }
+
+    function recordTrueBossClear() {
+      const h = loadClearHistory();
+      h.trueBoss = true;
+      saveClearHistory(h);
+      refreshTitleClearBadges();
+    }
+
+    function allThreeRoutesCleared() {
+      const h = loadClearHistory();
+      return Boolean(h.lum && h.shinobu && h.ran);
+    }
+
+    function refreshTitleClearBadges() {
+      const h = loadClearHistory();
+      const count = (h.lum ? 1 : 0) + (h.shinobu ? 1 : 0) + (h.ran ? 1 : 0);
+      const cEl = document.getElementById('title-clear-count');
+      if (cEl) cEl.textContent = `${count} / 3`;
+
+      const setBadge = (id, cleared, label) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = cleared ? `${label}: ★撃破済` : `${label}: 未達`;
+        el.className = cleared
+          ? 'px-2 py-1 rounded-lg bg-amber-950/80 border border-amber-400/75 text-center font-black text-amber-200'
+          : 'px-2 py-1 rounded-lg bg-stone-900 border border-stone-700 text-center font-bold text-stone-400';
+      };
+
+      setBadge('badge-clear-lum', h.lum, '⚡ ラム編');
+      setBadge('badge-clear-shinobu', h.shinobu, '💥 しのぶ編');
+      setBadge('badge-clear-ran', h.ran, '🌙 ラン編');
+
+      const trueBadge = document.getElementById('badge-true-clear');
+      const trueBtn = document.getElementById('btn-true-boss-direct');
+      const unlocked = allThreeRoutesCleared();
+      if (trueBadge) {
+        trueBadge.textContent = h.trueBoss
+          ? '🌑 真のラスボス「ダーク・あたる」: ★完全制覇達成！'
+          : unlocked
+            ? '🌑 真のラスボス「ダーク・あたる」出現解放中！（3ヒロイン同行）'
+            : '🌑 真のラスボス「ダーク・あたる」: 3ヒロイン制覇で出現';
+        trueBadge.className = unlocked
+          ? 'mt-1.5 px-2 py-1 rounded-lg bg-purple-950/85 border border-amber-400/75 text-center text-[10px] font-black text-amber-200'
+          : 'mt-1.5 px-2 py-1 rounded-lg bg-purple-950/45 border border-purple-500/35 text-center text-[10px] font-bold text-purple-200/75';
+      }
+      if (trueBtn) {
+        trueBtn.classList.toggle('hidden', !unlocked);
+      }
+    }
+
+    // =========================================================================
+    // 4. GAME STATE & CORE HELPERS
+    // =========================================================================
+    const GameState = {
+      screen: 'title',
+      storyMode: 'opening',
+      storyBeats: [],
+      storyIndex: 0,
+      storyOnComplete: null,
+
+      partnerId: 'lum',
+      partnerLeftForFinalBoss: false,
+      trueBossMode: false,
+      trueBossStyleId: 'lum',
+      act: 1,
+      killsInAct: 0,
+      killsNeededForAct: 16,
+      nextGatePos: { x: WORLD_W * 0.5, y: 150 },
+      gateUnlocked: false,
+      packSpawnCd: 0,
+      comboCount: 0,
+      comboTimer: 0,
+      bossActive: false,
+      bossTriggerPending: false,
+
+      lv: 1,
+      xp: 0,
+      xpToNext: 75,
+      gold: 60,
+      hp: 130,
+      mp: 70,
+      potHp: 3,
+      potMp: 3,
+
+      equipped: {
+        weapon: { ...ITEM_TEMPLATES[0] },
+        armor: { ...ITEM_TEMPLATES[4] },
+        partnerGear: { ...ITEM_TEMPLATES[7] }
+      },
+      charms: [{ ...CHARM_POOL[0] }],
+      runes: [{ ...RUNE_POOL[0] }],
+      inventory: [
+        { ...ITEM_TEMPLATES[1] },
+        { ...ITEM_TEMPLATES[8] }
+      ],
+
+      player: {
+        x: WORLD_W * 0.5,
+        y: WORLD_H * 0.78,
+        r: 16,
+        facingX: 0,
+        facingY: -1,
+        aimAngle: -Math.PI * 0.5,
+        dashTimer: 0,
+        dashCd: 0,
+        atkCd: 0,
+        skill1Cd: 0,
+        skill2Cd: 0,
+        invulnTimer: 0,
+        flashTimer: 0
+      },
+      slashFx: null,
+      partners: [],
+      enemies: [],
+      projectiles: [],
+      traps: [],
+      hazards: [],
+      particles: [],
+      floatingTexts: [],
+      decals: [],
+      worldProps: [],
+      camX: 0,
+      camY: 0,
+      timeSec: 0,
+      hitStopTimer: 0,
+      shakeTimer: 0,
+      shakePower: 0,
+      banterTimer: 0,
+      toastTimer: 0
+    };
+
+    function clampVal(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+
+    function computeStats() {
+      let atk = 20 + (GameState.lv - 1) * 5;
+      let def = 9 + (GameState.lv - 1) * 2.5;
+      let maxHp = 130 + (GameState.lv - 1) * 20;
+      let maxMp = 70 + (GameState.lv - 1) * 9;
+      let crit = 0.09;
+      let res = 6;
+      let mpOnKill = 2.0;
+      let mpRegen = 0;
+      let partnerAtk = 16 + (GameState.lv - 1) * 4;
+      let moveSpeed = 205;
+
+      if (GameState.partnerId === 'lum') {
+        crit += 0.08;
+        moveSpeed += 24;
+      } else if (GameState.partnerId === 'shinobu') {
+        atk += 8;
+        def += 10;
+        maxHp += 35;
+      } else if (GameState.partnerId === 'ran') {
+        maxMp += 25;
+        mpRegen += 4.0;
+      }
+
+      const gearList = [
+        GameState.equipped.weapon,
+        GameState.equipped.armor,
+        GameState.equipped.partnerGear,
+        ...GameState.charms,
+        ...GameState.runes
+      ].filter(Boolean);
+
+      for (const g of gearList) {
+        atk += g.atk || 0;
+        def += g.def || 0;
+        maxHp += g.hp || 0;
+        maxMp += g.mp || 0;
+        crit += g.crit || 0;
+        res += g.res || 0;
+        mpOnKill += g.mpOnKill || 0;
+        mpRegen += g.mpRegen || 0;
+        partnerAtk += g.partnerAtk || 0;
+      }
+
+      return {
+        atk: Math.round(atk),
+        def: Math.round(def),
+        maxHp: Math.round(maxHp),
+        maxMp: Math.round(maxMp),
+        crit: Math.min(0.8, crit),
+        res: Math.min(75, Math.round(res)),
+        mpOnKill,
+        mpRegen,
+        partnerAtk: Math.round(partnerAtk),
+        moveSpeed
+      };
+    }
+
+    function getActiveStyleId() {
+      if (GameState.trueBossMode) {
+        return PARTNER_META[GameState.trueBossStyleId] ? GameState.trueBossStyleId : 'lum';
+      }
+      return PARTNER_META[GameState.partnerId] ? GameState.partnerId : 'lum';
+    }
+
+    function getAimAngle() {
+      const p = GameState.player;
+      if (typeof p.aimAngle === 'number' && !Number.isNaN(p.aimAngle)) {
+        return p.aimAngle;
+      }
+      const ang = Math.atan2(p.facingY ?? -1, p.facingX ?? 0);
+      p.aimAngle = ang;
+      return ang;
+    }
+
+    function refreshSkillLabels() {
+      const styleId = getActiveStyleId();
+      const meta = PARTNER_META[styleId] || PARTNER_META.lum;
+      const sk1El = document.getElementById('label-sk1');
+      const sk2El = document.getElementById('label-sk2');
+      const legendEl = document.getElementById('key-legend-style');
+
+      if (sk1El) sk1El.textContent = meta.sk1Name;
+      if (sk2El) sk2El.textContent = meta.sk2Name;
+      if (legendEl) {
+        legendEl.textContent = GameState.trueBossMode
+          ? `Tab/3: 型(${meta.name})`
+          : 'H/M: HP/MP薬';
+      }
+    }
+
+    // =========================================================================
+    // 5. LOCALSTORAGE SAVE / LOAD / DELETE & CLEAR HISTORY
+    // =========================================================================
+    function buildSavePayload() {
+      return {
+        savedAt: new Date().toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+        partnerId: GameState.partnerId,
+        act: GameState.act,
+        killsInAct: GameState.killsInAct,
+        lv: GameState.lv,
+        xp: GameState.xp,
+        xpToNext: GameState.xpToNext,
+        gold: GameState.gold,
+        hp: GameState.hp,
+        mp: GameState.mp,
+        potHp: GameState.potHp,
+        potMp: GameState.potMp,
+        equipped: JSON.parse(JSON.stringify(GameState.equipped)),
+        charms: JSON.parse(JSON.stringify(GameState.charms)),
+        runes: JSON.parse(JSON.stringify(GameState.runes)),
+        inventory: JSON.parse(JSON.stringify(GameState.inventory))
+      };
+    }
+
+    function readSaveData(slot) {
+      try {
+        const raw = localStorage.getItem(`${SAVE_PREFIX}${slot}`);
+        return raw ? JSON.parse(raw) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function writeSaveSlot(slot, payload) {
+      try {
+        localStorage.setItem(`${SAVE_PREFIX}${slot}`, JSON.stringify(payload));
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function deleteSaveSlot(slot) {
+      try {
+        localStorage.removeItem(`${SAVE_PREFIX}${slot}`);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function applySavePayload(data) {
+      if (!data) return;
+      GameState.partnerId = PARTNER_META[data.partnerId] ? data.partnerId : 'lum';
+      GameState.trueBossMode = false;
+      GameState.partnerLeftForFinalBoss = false;
+      GameState.lv = Math.max(1, Number(data.lv) || 1);
+      GameState.xp = Math.max(0, Number(data.xp) || 0);
+      GameState.xpToNext = Math.max(50, Number(data.xpToNext) || 75);
+      GameState.gold = Math.max(0, Number(data.gold) || 0);
+      GameState.potHp = Math.max(0, Number(data.potHp) ?? 3);
+      GameState.potMp = Math.max(0, Number(data.potMp) ?? 3);
+
+      if (data.equipped) {
+        GameState.equipped = {
+          weapon: data.equipped.weapon || { ...ITEM_TEMPLATES[0] },
+          armor: data.equipped.armor || { ...ITEM_TEMPLATES[4] },
+          partnerGear: data.equipped.partnerGear || { ...ITEM_TEMPLATES[7] }
+        };
+      }
+      if (Array.isArray(data.charms)) GameState.charms = data.charms;
+      if (Array.isArray(data.runes)) GameState.runes = data.runes;
+      if (Array.isArray(data.inventory)) GameState.inventory = data.inventory;
+
+      const st = computeStats();
+      GameState.hp = clampVal(Number(data.hp) || st.maxHp, 1, st.maxHp);
+      GameState.mp = clampVal(Number(data.mp) || st.maxMp, 0, st.maxMp);
+
+      const targetAct = clampVal(Number(data.act) || 1, 1, 5);
+      setScreen('play');
+      setupActField(targetAct);
+      if (Number(data.killsInAct) > 0) {
+        GameState.killsInAct = Math.min(GameState.killsNeededForAct, Number(data.killsInAct));
+        if (GameState.killsInAct >= GameState.killsNeededForAct) {
+          GameState.gateUnlocked = true;
+        }
+        updateObjectiveText();
+      }
+    }
+
+    function renderSaveSlots(containerEl) {
+      if (!containerEl) return;
+      const h = loadClearHistory();
+      const histBox = document.createElement('div');
+      histBox.className = 'p-2.5 rounded-xl bg-stone-950/90 border border-amber-500/35 space-y-1';
+      histBox.innerHTML = `
+        <div class="font-black text-amber-300 text-[11px]">🏆 クリア履歴</div>
+        <div class="text-[11px] text-stone-200">
+          ラム編: <strong>${h.lum ? 'クリア済' : '未クリア'}</strong> /
+          しのぶ編: <strong>${h.shinobu ? 'クリア済' : '未クリア'}</strong> /
+          ラン編: <strong>${h.ran ? 'クリア済' : '未クリア'}</strong>
+        </div>
+        <div class="text-[11px] text-purple-200">
+          真のラスボス「ダーク・あたる」: <strong>${h.trueBoss ? '撃破済' : (allThreeRoutesCleared() ? '挑戦可能' : '3ルート制覇で解放')}</strong>
+        </div>
+      `;
+      containerEl.appendChild(histBox);
+
+      [0, 1, 2, 3].forEach((slot) => {
+        const data = readSaveData(slot);
+        const card = document.createElement('div');
+        card.className = 'p-2.5 rounded-xl bg-stone-950/90 border border-amber-500/30 space-y-1.5';
+        const slotLabel = slot === 0 ? 'スロット0 [自動保存]' : `スロット${slot}`;
+        card.innerHTML = data
+          ? `
+            <div class="flex justify-between items-center">
+              <span class="font-black text-amber-200">${slotLabel}</span>
+              <span class="text-[10px] text-stone-400">${data.savedAt || ''}</span>
+            </div>
+            <div class="text-[11px] text-stone-200">
+              相棒: <strong class="text-emerald-300">${(PARTNER_META[data.partnerId] || PARTNER_META.lum).name}</strong> /
+              Lv.${data.lv || 1} / ACT ${data.act || 1} / ${data.gold || 0}G
+            </div>
+          `
+          : `
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-stone-400">${slotLabel} — 空きスロット</span>
+            </div>
+          `;
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'flex gap-1.5 pt-1';
+
+        if (GameState.screen === 'play' && slot > 0) {
+          const bSave = document.createElement('button');
+          bSave.className = 'd2-btn px-2.5 py-1 rounded text-[10px] font-bold';
+          bSave.textContent = '💾 保存';
+          bSave.addEventListener('click', () => {
+            SoundEngine.sfx.pickup();
+            writeSaveSlot(slot, buildSavePayload());
+            triggerToast(`スロット${slot}にセーブしました`);
+            renderOverlayContent();
+          });
+          btnRow.appendChild(bSave);
+        }
+
+        if (data) {
+          const bLoad = document.createElement('button');
+          bLoad.className = 'd2-btn d2-btn-crimson px-2.5 py-1 rounded text-[10px] font-bold';
+          bLoad.textContent = '▶ ロード';
+          bLoad.addEventListener('click', () => {
+            SoundEngine.sfx.pickup();
+            closeOverlayMenu();
+            applySavePayload(data);
+            triggerToast(`${slotLabel}から再開しました`);
+          });
+          btnRow.appendChild(bLoad);
+
+          const bDel = document.createElement('button');
+          bDel.className = 'd2-btn px-2.5 py-1 rounded text-[10px] font-bold text-rose-300';
+          bDel.textContent = '🗑 削除';
+          bDel.addEventListener('click', () => {
+            SoundEngine.sfx.uiClick();
+            deleteSaveSlot(slot);
+            triggerToast(`${slotLabel}を削除しました`);
+            renderOverlayContent();
+          });
+          btnRow.appendChild(bDel);
+        }
+
+        card.appendChild(btnRow);
+        containerEl.appendChild(card);
+      });
+    }
+
+    // =========================================================================
+    // 6. UI SCREENS, STORY ENGINE, TITLE BANNER & PARTNER SELECTION
+    // =========================================================================
+    function setScreen(name) {
+      GameState.screen = name;
+      document.getElementById('screen-title').classList.toggle('hidden', name !== 'title');
+      document.getElementById('screen-partner').classList.toggle('hidden', name !== 'partner');
+      document.getElementById('screen-story').classList.toggle('hidden', name !== 'story');
+      document.getElementById('combat-hud').classList.toggle('hidden', name !== 'play');
+      document.getElementById('combat-controls').classList.toggle('hidden', name !== 'play');
+      document.getElementById('stage-status-pill').classList.toggle('hidden', name !== 'play');
+
+      if (name !== 'play') {
+        document.getElementById('battle-banter').classList.add('hidden');
+        document.getElementById('toast-banner').classList.add('hidden');
+      }
+
+      if (name === 'play') {
+        SoundEngine.startBgm(GameState.trueBossMode ? 'trueboss' : (GameState.bossActive ? 'boss' : 'combat'));
+      } else if (name === 'title') {
+        SoundEngine.stopBgm();
+        refreshTitleClearBadges();
+        drawTitleBanner();
+      }
+    }
+
+    function triggerToast(msg) {
+      const el = document.getElementById('toast-banner');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      GameState.toastTimer = 2.3;
+    }
+
+    function triggerBanter(speakerId, lineText) {
+      // Strictly only Ataru or active partner(s) may speak during combat/exploration
+      const allowedSpeakers = new Set(['ataru']);
+      if (GameState.trueBossMode) {
+        allowedSpeakers.add('lum');
+        allowedSpeakers.add('shinobu');
+        allowedSpeakers.add('ran');
+      } else if (!(GameState.act === 5 && GameState.partnerLeftForFinalBoss)) {
+        allowedSpeakers.add(GameState.partnerId);
+      }
+
+      if (!allowedSpeakers.has(speakerId)) return;
+
+      GameState.banterTimer = 3.1;
+      const box = document.getElementById('battle-banter');
+      const spEl = document.getElementById('banter-speaker');
+      const txEl = document.getElementById('banter-text');
+      const pCanvas = document.getElementById('banter-portrait');
+      const pCtx = pCanvas.getContext('2d');
+
+      const nameMap = { ataru: 'あたる', lum: 'ラム', shinobu: 'しのぶ', ran: 'ラン' };
+      spEl.textContent = nameMap[speakerId] || speakerId;
+      txEl.textContent = lineText;
+      CharacterArt.drawPortrait(pCtx, speakerId, speakerId === 'ataru' ? 'smirk' : 'happy', pCanvas.width, pCanvas.height);
+      box.classList.remove('hidden');
+    }
+
+    function startStorySequence(beats, onComplete, mode = 'opening') {
+      GameState.storyMode = mode;
+      GameState.storyBeats = beats;
+      GameState.storyIndex = 0;
+      GameState.storyOnComplete = onComplete;
+      SoundEngine.stopBgm();
+      setScreen('story');
+      renderCurrentStoryBeat();
+    }
+
+    function renderCurrentStoryBeat() {
+      const beats = GameState.storyBeats;
+      const idx = GameState.storyIndex;
+      if (!beats || idx >= beats.length) {
+        const cb = GameState.storyOnComplete;
+        GameState.storyOnComplete = null;
+        if (typeof cb === 'function') cb();
+        return;
+      }
+      const b = beats[idx];
+      const tagMap = {
+        opening: 'PROLOGUE — 闇の裂け目',
+        boss: 'ENCOUNTER — 宿命の対峙',
+        trueboss: 'TRUE BOSS — 深淵のダーク・あたる',
+        ending: 'EPILOGUE — 友引の結末'
+      };
+      document.getElementById('story-chapter-tag').textContent = tagMap[GameState.storyMode] || 'STORY';
+      document.getElementById('story-speaker-badge').textContent = b.speaker;
+      document.getElementById('story-dialogue-text').textContent = b.text;
+      document.getElementById('story-progress-text').textContent = `${idx + 1} / ${beats.length}`;
+
+      const pCanvas = document.getElementById('story-portrait-canvas');
+      CharacterArt.drawPortrait(pCanvas.getContext('2d'), b.charId || 'ataru', b.expr || 'normal', pCanvas.width, pCanvas.height);
+    }
+
+    function advanceStoryBeat() {
+      SoundEngine.sfx.uiClick();
+      GameState.storyIndex += 1;
+      renderCurrentStoryBeat();
+    }
+
+    function drawTitleBanner() {
+      const c = document.getElementById('title-banner-canvas');
+      if (!c) return;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, c.width, c.height);
+
+      const g = ctx.createLinearGradient(0, 0, c.width, c.height);
+      g.addColorStop(0, '#290b10');
+      g.addColorStop(0.5, '#130e1c');
+      g.addColorStop(1, '#1d1408');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.32)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(c.width * 0.5, c.height * 0.52, 62, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const roster = ['ataru', 'lum', 'shinobu', 'ran'];
+      const slotW = 70;
+      const slotH = 92;
+      const gap = 6;
+      const startX = (c.width - (roster.length * slotW + (roster.length - 1) * gap)) * 0.5;
+      const yPos = 24;
+
+      const tmp = document.createElement('canvas');
+      tmp.width = 96;
+      tmp.height = 96;
+      const tCtx = tmp.getContext('2d');
+
+      roster.forEach((cid, i) => {
+        const expr = cid === 'ataru' ? 'smirk' : 'happy';
+        CharacterArt.drawPortrait(tCtx, cid, expr, 96, 96);
+        const xPos = startX + i * (slotW + gap);
+        ctx.drawImage(tmp, 0, 0, 96, 96, xPos, yPos, slotW, slotH);
+        ctx.strokeStyle = cid === 'ataru' ? '#f59e0b' : 'rgba(247, 220, 132, 0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(xPos, yPos, slotW, slotH);
+
+        const labelMap = { ataru: 'あたる', lum: 'ラム', shinobu: 'しのぶ', ran: 'ラン' };
+        ctx.fillStyle = '#fef3c7';
+        ctx.font = 'bold 10px "Noto Sans JP", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labelMap[cid], xPos + slotW * 0.5, yPos + slotH + 14);
+      });
+    }
+
+    function renderPartnerCards() {
+      const container = document.getElementById('partner-cards');
+      container.innerHTML = '';
+      ['lum', 'shinobu', 'ran'].forEach((id) => {
+        const meta = PARTNER_META[id];
+        const selected = GameState.partnerId === id;
+        const card = document.createElement('div');
+        card.className = `p-2.5 rounded-xl border cursor-pointer flex items-center gap-2.5 transition ${
+          selected ? 'bg-amber-950/80 border-amber-400 shadow-lg' : 'bg-stone-950/85 border-stone-700 hover:border-amber-500/50'
+        }`;
+        const pCan = document.createElement('canvas');
+        pCan.width = 64;
+        pCan.height = 64;
+        pCan.className = 'rounded-lg border border-amber-500/45 shrink-0';
+        CharacterArt.drawPortrait(pCan.getContext('2d'), id, selected ? 'happy' : 'normal', 64, 64);
+
+        const info = document.createElement('div');
+        info.className = 'min-w-0 flex-1';
+        info.innerHTML = `
+          <div class="flex items-center justify-between gap-1">
+            <span class="font-black text-sm text-amber-200">${meta.name}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-stone-900 text-amber-300 border border-amber-500/35 truncate">${meta.title}</span>
+          </div>
+          <p class="text-[11px] text-stone-200/90 mt-0.5 leading-snug">${meta.roleDesc}</p>
+        `;
+
+        card.appendChild(pCan);
+        card.appendChild(info);
+        card.addEventListener('click', () => {
+          SoundEngine.sfx.uiClick();
+          GameState.partnerId = id;
+          renderPartnerCards();
+        });
+        container.appendChild(card);
+      });
+    }
+
+    // =========================================================================
+    // 7. OVERLAY MENU: EQUIPMENT, CHARMS/RUNES, SAVES & CLEAR HISTORY
+    // =========================================================================
+    let activeOverlayTab = 'gear';
+
+    function openOverlayMenu(tabName = 'gear') {
+      activeOverlayTab = tabName;
+      document.getElementById('screen-overlay-menu').classList.remove('hidden');
+      document.querySelectorAll('.overlay-tab-btn').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.tab === tabName);
+      });
+      renderOverlayContent();
+    }
+
+    function closeOverlayMenu() {
+      document.getElementById('screen-overlay-menu').classList.add('hidden');
+    }
+
+    function renderOverlayContent() {
+      const box = document.getElementById('overlay-tab-content');
+      box.innerHTML = '';
+      const st = computeStats();
+
+      if (activeOverlayTab === 'gear') {
+        const summary = document.createElement('div');
+        summary.className = 'p-2.5 rounded-xl bg-stone-950/90 border border-amber-500/30 grid grid-cols-3 gap-1.5 text-[11px]';
+        summary.innerHTML = `
+          <div>攻撃: <strong class="text-amber-300">${st.atk}</strong></div>
+          <div>防御: <strong class="text-sky-300">${st.def}</strong></div>
+          <div>会心: <strong class="text-rose-300">${Math.round(st.crit * 100)}%</strong></div>
+          <div>全耐性: <strong class="text-emerald-300">${st.res}</strong></div>
+          <div>相棒攻: <strong class="text-lime-300">${st.partnerAtk}</strong></div>
+          <div>所持金: <strong class="text-yellow-300">${GameState.gold}G</strong></div>
+        `;
+        box.appendChild(summary);
+
+        const eqBox = document.createElement('div');
+        eqBox.className = 'space-y-1.5';
+        eqBox.innerHTML = `<div class="text-[11px] font-bold text-amber-300">装備中スロット</div>`;
+        [
+          ['weapon', '武器'],
+          ['armor', '鎧'],
+          ['partnerGear', `相棒(${PARTNER_META[GameState.partnerId].name})装備`]
+        ].forEach(([slotKey, label]) => {
+          const item = GameState.equipped[slotKey];
+          const row = document.createElement('div');
+          row.className = 'p-2 rounded-lg bg-stone-900/90 border border-stone-700';
+          row.innerHTML = `
+            <div class="text-[10px] text-stone-400">${label}</div>
+            <div class="font-bold rarity-${item ? item.rarity : 'common'}">${item ? item.name : 'なし'}</div>
+            <div class="text-[10px] text-stone-300">${item ? item.affix : ''}</div>
+          `;
+          eqBox.appendChild(row);
+        });
+        box.appendChild(eqBox);
+
+        const invBox = document.createElement('div');
+        invBox.className = 'space-y-1.5';
+        invBox.innerHTML = `<div class="text-[11px] font-bold text-amber-300">バッグ (${GameState.inventory.length}/18)</div>`;
+        if (GameState.inventory.length === 0) {
+          invBox.innerHTML += `<div class="text-[11px] text-stone-400">バッグは空です。敵を倒して装備やルーンを集めましょう！</div>`;
+        } else {
+          GameState.inventory.forEach((item, idx) => {
+            const row = document.createElement('div');
+            row.className = 'p-2 rounded-lg bg-stone-950/85 border border-stone-800 flex items-center justify-between gap-2';
+            row.innerHTML = `
+              <div class="min-w-0">
+                <div class="font-bold truncate rarity-${item.rarity || 'common'}">${item.name}</div>
+                <div class="text-[10px] text-stone-300 truncate">${item.affix || ''}</div>
+              </div>
+              <button class="d2-btn px-2.5 py-1 rounded text-[10px] font-bold shrink-0">装備</button>
+            `;
+            row.querySelector('button').addEventListener('click', () => {
+              SoundEngine.sfx.pickup();
+              if (item.kind === 'charm') {
+                if (GameState.charms.length < 4) {
+                  GameState.inventory.splice(idx, 1);
+                  GameState.charms.push(item);
+                } else {
+                  triggerToast('護符枠(4)がいっぱいです');
+                  return;
+                }
+              } else if (item.kind === 'rune') {
+                if (GameState.runes.length < 4) {
+                  GameState.inventory.splice(idx, 1);
+                  GameState.runes.push(item);
+                } else {
+                  triggerToast('ルーン枠(4)がいっぱいです');
+                  return;
+                }
+              } else {
+                const slot = item.slot || 'weapon';
+                const prev = GameState.equipped[slot];
+                GameState.equipped[slot] = item;
+                GameState.inventory.splice(idx, 1);
+                if (prev) GameState.inventory.push(prev);
+              }
+              const newSt = computeStats();
+              GameState.hp = Math.min(newSt.maxHp, GameState.hp);
+              GameState.mp = Math.min(newSt.maxMp, GameState.mp);
+              renderOverlayContent();
+            });
+            invBox.appendChild(row);
+          });
+        }
+        box.appendChild(invBox);
+      } else if (activeOverlayTab === 'charms') {
+        const cTitle = document.createElement('div');
+        cTitle.className = 'font-bold text-amber-300';
+        cTitle.textContent = `所持護符 (${GameState.charms.length}/4)`;
+        box.appendChild(cTitle);
+        GameState.charms.forEach((c) => {
+          const el = document.createElement('div');
+          el.className = 'p-2 rounded-lg bg-stone-900/90 border border-emerald-500/35';
+          el.innerHTML = `<div class="font-bold rarity-charm">${c.name}</div><div class="text-[10px] text-stone-300">${c.affix}</div>`;
+          box.appendChild(el);
+        });
+
+        const rTitle = document.createElement('div');
+        rTitle.className = 'font-bold text-amber-300 pt-2';
+        rTitle.textContent = `装着ルーン (${GameState.runes.length}/4)`;
+        box.appendChild(rTitle);
+        GameState.runes.forEach((r) => {
+          const el = document.createElement('div');
+          el.className = 'p-2 rounded-lg bg-stone-900/90 border border-amber-500/40';
+          el.innerHTML = `<div class="font-bold rarity-rune">${r.name}</div><div class="text-[10px] text-stone-300">${r.affix}</div>`;
+          box.appendChild(el);
+        });
+      } else if (activeOverlayTab === 'saves') {
+        renderSaveSlots(box);
+      }
+    }
+
+    // =========================================================================
+    // 8. FIELD EXPLORATION, HIGH-DENSITY PACKS, MID-BOSSES & FINAL BOSSES
+    // =========================================================================
+    function generateWorldProps(actNum, themeKey) {
+      const props = [];
+      const pool = {
+        ruins: ['pillar', 'brazier', 'rubble'],
+        desert: ['obelisk', 'brazier', 'rubble'],
+        jungle: ['foliage', 'brazier', 'rubble'],
+        hell: ['pillar', 'brazier', 'rubble'],
+        snow: ['ice_spire', 'brazier', 'rubble']
+      }[themeKey] || ['pillar', 'brazier', 'rubble'];
+
+      for (let i = 0; i < 40; i++) {
+        const px = 86 + ((i * 181 + actNum * 97) % (WORLD_W - 172));
+        const py = 120 + ((i * 229 + actNum * 131) % (WORLD_H - 240));
+        if (Math.hypot(px - WORLD_W * 0.5, py - WORLD_H * 0.78) < 130) continue;
+        const type = pool[i % pool.length];
+        const solid = (type === 'pillar' || type === 'obelisk' || type === 'ice_spire');
+        props.push({ x: px, y: py, type, r: solid ? 17 : 13, solid });
+      }
+      return props;
+    }
+
+    function syncPartyFormation(includeAllThree = false) {
+      const p = GameState.player;
+      if (includeAllThree) {
+        GameState.partners = [
+          { id: 'lum', x: p.x - 42, y: p.y + 18, r: 15, atkCd: 0.2, specialCd: 2, flashTimer: 0 },
+          { id: 'shinobu', x: p.x + 42, y: p.y + 18, r: 15, atkCd: 0.35, specialCd: 3, flashTimer: 0 },
+          { id: 'ran', x: p.x, y: p.y + 44, r: 15, atkCd: 0.5, specialCd: 4, flashTimer: 0 }
+        ];
+      } else if (GameState.act === 5 && GameState.partnerLeftForFinalBoss) {
+        GameState.partners = [];
+      } else {
+        GameState.partners = [
+          { id: GameState.partnerId, x: p.x - 36, y: p.y + 18, r: 15, atkCd: 0.2, specialCd: 2, flashTimer: 0 }
+        ];
+      }
+    }
+
+    function updateObjectiveText() {
+      const oEl = document.getElementById('stage-objective-text');
+      if (!oEl) return;
+      if (GameState.trueBossMode) {
+        oEl.textContent = '🌑 3ヒロインと「ダーク・あたる」を撃破せよ！(Tab/3で型切替)';
+      } else if (GameState.bossActive) {
+        oEl.textContent = '⚔️ 覚醒したラスボスを打ち倒せ！';
+      } else if (GameState.gateUnlocked) {
+        oEl.textContent = '🌀 北方の次なる領域ゲートへ踏み込め！';
+      } else {
+        oEl.textContent = `群れを討伐(${GameState.killsInAct}/${GameState.killsNeededForAct})し、北方ゲートを開け！`;
+      }
+    }
+
+    function spawnMonsterPack(count = 20, forceElite = false) {
+      const actScale = 1 + (GameState.act - 1) * 0.38;
+      const p = GameState.player;
+      for (let i = 0; i < count; i++) {
+        if (GameState.enemies.length >= 54) break;
+        const tplIdx = Math.min(D2R_MONSTER_TYPES.length - 1, Math.floor(Math.random() * (3 + GameState.act)));
+        const tpl = D2R_MONSTER_TYPES[tplIdx];
+        const isElite = forceElite || (Math.random() < 0.24);
+        const affix = isElite ? ELITE_AFFIXES[Math.floor(Math.random() * ELITE_AFFIXES.length)] : null;
+
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 135 + Math.random() * 310;
+        const x = clampVal(p.x + Math.cos(ang) * dist, 54, WORLD_W - 54);
+        const y = clampVal(p.y + Math.sin(ang) * dist, 74, WORLD_H - 54);
+
+        const hp = Math.max(12, Math.round(tpl.hp * 0.78 * actScale * (affix ? affix.multHp : 1)));
+        const dmg = Math.max(4, Math.round(tpl.dmg * 0.85 * actScale * (affix ? affix.multDmg : 1)));
+
+        GameState.enemies.push({
+          id: 'm_' + Math.random().toString(36).slice(2, 8),
+          isBoss: false,
+          isMidBoss: false,
+          charId: null,
+          name: affix ? `${affix.label} ${tpl.name}` : tpl.name,
+          color: affix ? affix.color : tpl.color,
+          x,
+          y,
+          r: isElite ? tpl.r + 3 : tpl.r,
+          hp,
+          maxHp: hp,
+          spd: tpl.spd * (0.95 + Math.random() * 0.25),
+          dmg,
+          xp: Math.round(tpl.xp * actScale * (isElite ? 2.2 : 1)),
+          gold: Math.round(tpl.gold * actScale * (isElite ? 2.5 : 1)),
+          atkCd: 0.45 + Math.random() * 0.45,
+          flashTimer: 0,
+          chillTimer: 0
+        });
+      }
+    }
+
+    function spawnMidBossIfNeeded(actNum) {
+      const mb = getMidBossMeta(GameState.partnerId, actNum);
+      if (!mb) return;
+      const hp = Math.round(480 * (1 + (actNum - 2) * 0.45));
+      GameState.enemies.push({
+        id: `midboss_${mb.charId}_${actNum}`,
+        isBoss: true,
+        isMidBoss: true,
+        bossType: 'mid',
+        charId: mb.charId,
+        name: mb.name,
+        color: mb.color,
+        x: WORLD_W * 0.5,
+        y: WORLD_H * 0.34,
+        r: 22,
+        hp,
+        maxHp: hp,
+        spd: 108,
+        dmg: 24 + actNum * 4,
+        xp: 260 * actNum,
+        gold: 240 * actNum,
+        atkCd: 0.7,
+        patternTimer: 1.5,
+        patternStep: 0,
+        chargeTimer: 0,
+        chargeVx: 0,
+        chargeVy: 0,
+        flashTimer: 0,
+        chillTimer: 0
+      });
+      triggerToast(`⚔️ ${mb.name} が出現！`);
+    }
+
+    function setupActField(actNum) {
+      GameState.trueBossMode = false;
+      GameState.act = actNum;
+      GameState.killsInAct = 0;
+      GameState.killsNeededForAct = 14 + actNum * 4;
+      GameState.gateUnlocked = false;
+      GameState.nextGatePos = { x: WORLD_W * 0.5, y: 150 };
+      GameState.packSpawnCd = 0;
+      GameState.comboCount = 0;
+      GameState.comboTimer = 0;
+      GameState.bossActive = false;
+      GameState.bossTriggerPending = false;
+      GameState.partnerLeftForFinalBoss = false;
+      GameState.enemies = [];
+      GameState.projectiles = [];
+      GameState.traps = [];
+      GameState.hazards = [];
+      GameState.particles = [];
+      GameState.floatingTexts = [];
+      GameState.decals = [];
+
+      const cfg = getRouteActConfig(GameState.partnerId, actNum);
+      GameState.worldProps = generateWorldProps(actNum, cfg.propTheme);
+
+      document.getElementById('hud-act-badge').textContent = cfg.badge;
+      document.getElementById('hud-zone-name').textContent = cfg.name;
+      document.getElementById('boss-hud').classList.add('hidden');
+      refreshSkillLabels();
+
+      GameState.player.x = WORLD_W * 0.5;
+      GameState.player.y = WORLD_H * 0.78;
+      syncPartyFormation(false);
+
+      spawnMonsterPack(26, true);
+      spawnMidBossIfNeeded(actNum);
+      updateObjectiveText();
+      SoundEngine.startBgm('combat');
+      writeSaveSlot(0, buildSavePayload());
+
+      const pMeta = PARTNER_META[GameState.partnerId] || PARTNER_META.lum;
+      triggerBanter(GameState.partnerId, pMeta.banterCombat[0]);
+    }
+
+    function setupTrueBossArena() {
+      GameState.trueBossMode = true;
+      GameState.trueBossStyleId = 'lum';
+      GameState.act = 5;
+      GameState.killsInAct = 0;
+      GameState.killsNeededForAct = 0;
+      GameState.gateUnlocked = false;
+      GameState.bossActive = true;
+      GameState.bossTriggerPending = false;
+      GameState.partnerLeftForFinalBoss = false;
+      GameState.enemies = [];
+      GameState.projectiles = [];
+      GameState.traps = [];
+      GameState.hazards = [];
+      GameState.particles = [];
+      GameState.floatingTexts = [];
+      GameState.decals = [];
+      GameState.worldProps = generateWorldProps(5, 'hell');
+
+      if (GameState.lv < 9) {
+        GameState.lv = 9;
+        const st = computeStats();
+        GameState.hp = st.maxHp;
+        GameState.mp = st.maxMp;
+      }
+
+      document.getElementById('hud-act-badge').textContent = 'TRUE FINAL';
+      document.getElementById('hud-zone-name').textContent = '深淵の聖座・ダーク・あたる';
+      refreshSkillLabels();
+
+      GameState.player.x = WORLD_W * 0.5;
+      GameState.player.y = WORLD_H * 0.78;
+      syncPartyFormation(true);
+
+      const hp = 5800;
+      GameState.enemies.push({
+        id: 'true_boss_dark_ataru',
+        isBoss: true,
+        isMidBoss: false,
+        bossType: 'true_final',
+        charId: 'dark_ataru',
+        name: '深淵の魔王 ダーク・あたる',
+        color: '#a855f7',
+        x: WORLD_W * 0.5,
+        y: WORLD_H * 0.28,
+        r: 28,
+        hp,
+        maxHp: hp,
+        spd: 130,
+        dmg: 48,
+        xp: 2200,
+        gold: 2500,
+        atkCd: 0.65,
+        patternTimer: 1.0,
+        patternStep: 0,
+        chargeTimer: 0,
+        chargeVx: 0,
+        chargeVy: 0,
+        flashTimer: 0,
+        chillTimer: 0
+      });
+
+      document.getElementById('boss-hud').classList.remove('hidden');
+      document.getElementById('boss-name-label').textContent = '🌑 真のラスボス: ダーク・あたる';
+      updateObjectiveText();
+      SoundEngine.startBgm('trueboss');
+      triggerBanter('ataru', '「ラム、しのぶ、ラン！3人そろって闇の俺に立ち向かうぜ！(Tab/3で型切替)」');
+    }
+
+    function enterNextActByExploration() {
+      if (GameState.bossTriggerPending) return;
+      if (GameState.act < 5) {
+        const nextAct = GameState.act + 1;
+        SoundEngine.sfx.levelUp();
+        triggerToast(`🌀 ${getRouteActConfig(GameState.partnerId, nextAct).badge} へ踏み込んだ！`);
+        setupActField(nextAct);
+      } else {
+        GameState.bossTriggerPending = true;
+        GameState.bossActive = true;
+        GameState.partnerLeftForFinalBoss = true;
+        syncPartyFormation(false);
+
+        const pMeta = PARTNER_META[GameState.partnerId] || PARTNER_META.lum;
+        triggerToast(`⚡ ${pMeta.name} が聖座の中心で立ちはだかる…！`);
+
+        const script = getFinalBossScript(GameState.partnerId);
+        SoundEngine.sfx.bossWarn();
+        startStorySequence(script, () => {
+          GameState.bossTriggerPending = false;
+          setScreen('play');
+          const bossHp = 3500;
+          const bossTitleMap = {
+            lum: '暴走雷神ラム',
+            shinobu: '怒髪剛力しのぶ',
+            ran: '呪詛の女王ラン'
+          };
+          GameState.enemies.push({
+            id: 'final_boss_' + GameState.partnerId,
+            isBoss: true,
+            isMidBoss: false,
+            bossType: 'partner_final',
+            charId: GameState.partnerId,
+            name: bossTitleMap[GameState.partnerId] || `覚醒の${pMeta.name}`,
+            color: GameState.partnerId === 'lum' ? '#facc15' : (GameState.partnerId === 'shinobu' ? '#f43f5e' : '#e879f9'),
+            x: WORLD_W * 0.5,
+            y: clampVal(GameState.player.y - 230, 110, WORLD_H - 110),
+            r: 26,
+            hp: bossHp,
+            maxHp: bossHp,
+            spd: 120,
+            dmg: 40,
+            xp: 1200,
+            gold: 1300,
+            atkCd: 0.65,
+            patternTimer: 1.1,
+            patternStep: 0,
+            chargeTimer: 0,
+            chargeVx: 0,
+            chargeVy: 0,
+            flashTimer: 0,
+            chillTimer: 0
+          });
+          spawnMonsterPack(14, true);
+          document.getElementById('boss-hud').classList.remove('hidden');
+          document.getElementById('boss-name-label').textContent = `★ ラスボス: ${bossTitleMap[GameState.partnerId] || pMeta.name}`;
+          updateObjectiveText();
+          SoundEngine.startBgm('boss');
+        }, 'boss');
+      }
+    }
+
+    // =========================================================================
+    // 9. ATARU COMBAT: FRONTAL SLASH & DISTINCT SECONDARY SKILLS PER STYLE
+    // =========================================================================
+    function spawnSlashEffect(originX, originY, angle, reach, halfAngle, color = '#fef08a') {
+      const fx = {
+        x: originX,
+        y: originY,
+        ang: angle,
+        reach,
+        halfAngle,
+        color,
+        life: 0.19,
+        maxLife: 0.19
+      };
+      GameState.slashFx = fx;
+      GameState.particles.push({
+        type: 'slashFx',
+        x: originX,
+        y: originY,
+        ang: angle,
+        reach,
+        halfAngle,
+        color,
+        life: 0.19,
+        maxLife: 0.19
+      });
+    }
+
+    function playerBasicAttack() {
+      if (GameState.screen !== 'play') return;
+      const p = GameState.player;
+      const st = computeStats();
+      if (p.atkCd > 0) return;
+
+      const styleId = getActiveStyleId();
+      p.atkCd = styleId === 'lum' ? 0.19 : 0.23;
+      SoundEngine.sfx.slash();
+
+      const ang = getAimAngle();
+      p.facingX = Math.cos(ang);
+      p.facingY = Math.sin(ang);
+
+      // Narrow frontal-cone melee slash (~52 deg total)
+      const reach = 64;
+      const halfConeAngle = 0.45;
+      const slashColor = GameState.trueBossMode
+        ? '#f472b6'
+        : (styleId === 'lum' ? '#fef08a' : (styleId === 'shinobu' ? '#fb923c' : '#e879f9'));
+
+      spawnSlashEffect(p.x, p.y, ang, reach, halfConeAngle, slashColor);
+
+      let hitAny = false;
+      const kb = styleId === 'shinobu' ? 56 : 28;
+      for (const e of [...GameState.enemies]) {
+        const dx = e.x - p.x;
+        const dy = e.y - p.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist <= reach + e.r + 8) {
+          const toEnemyAng = Math.atan2(dy, dx);
+          let diff = toEnemyAng - ang;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          if (Math.abs(diff) <= halfConeAngle + 0.18) {
+            hitAny = true;
+            addBurstParticles(e.x, e.y, slashColor, 7, 145);
+            damageEnemy(e, st.atk * 1.18, Math.random() < st.crit, kb);
+          }
+        }
+      }
+      if (hitAny) SoundEngine.sfx.heavyHit();
+    }
+
+    // Strictly distinct behavior, visual effects, callouts & Web Audio SFX for each style & slot (0 vs 1)
+    function triggerSecondarySkill(slotIndex) {
+      if (GameState.screen !== 'play') return;
+      const p = GameState.player;
+      const st = computeStats();
+      const styleId = getActiveStyleId();
+      const ang = getAimAngle();
+
+      if (slotIndex === 0) {
+        if (p.skill1Cd > 0) return;
+        if (GameState.mp < 12) {
+          triggerToast('💧 MPが足りません');
+          return;
+        }
+        GameState.mp -= 12;
+
+        if (styleId === 'lum') {
+          // [ラムの電撃スタイル - 技1: 電撃スパーク] Forward crackle lightning arcs + shock damage
+          p.skill1Cd = 1.0;
+          SoundEngine.sfx.lumSpark();
+          GameState.shakeTimer = 0.12;
+          GameState.shakePower = 4.5;
+
+          const startX = p.x + Math.cos(ang) * 14;
+          const startY = p.y + Math.sin(ang) * 14;
+          const tipX = clampVal(p.x + Math.cos(ang) * 145, 28, WORLD_W - 28);
+          const tipY = clampVal(p.y + Math.sin(ang) * 145, 38, WORLD_H - 28);
+
+          [-0.26, 0, 0.26].forEach((off) => {
+            const bx = clampVal(p.x + Math.cos(ang + off) * 138, 28, WORLD_W - 28);
+            const by = clampVal(p.y + Math.sin(ang + off) * 138, 38, WORLD_H - 28);
+            GameState.particles.push({ type: 'bolt', x1: startX, y1: startY, x2: bx, y2: by, color: '#38bdf8', life: 0.2, maxLife: 0.2 });
+          });
+          addBurstParticles(tipX, tipY, '#7dd3fc', 16, 190);
+
+          for (const e of [...GameState.enemies]) {
+            if (distToSegment(e.x, e.y, startX, startY, tipX, tipY) <= 68 + e.r) {
+              e.chillTimer = 1.5;
+              damageEnemy(e, st.atk * 1.65, Math.random() < st.crit + 0.15, 24);
+            }
+          }
+          addFloatingText(p.x, p.y - 24, '⚡ 電撃スパーク!', '#38bdf8');
+        } else if (styleId === 'shinobu') {
+          // [しのぶの怪力破砕スタイル - 技1: 怪力大槌] Heavy forward hammer slam ring & huge knockback
+          p.skill1Cd = 1.15;
+          SoundEngine.sfx.shinobuHammer();
+          GameState.shakeTimer = 0.22;
+          GameState.shakePower = 8;
+          GameState.hitStopTimer = 0.03;
+
+          const slamX = clampVal(p.x + Math.cos(ang) * 74, 34, WORLD_W - 34);
+          const slamY = clampVal(p.y + Math.sin(ang) * 74, 46, WORLD_H - 34);
+          GameState.particles.push({ type: 'ring', x: slamX, y: slamY, r: 12, maxR: 112, color: '#f97316', life: 0.26, maxLife: 0.26 });
+          addBurstParticles(slamX, slamY, '#fb923c', 20, 210);
+
+          for (const e of [...GameState.enemies]) {
+            if (Math.hypot(e.x - slamX, e.y - slamY) <= 116 + e.r) {
+              damageEnemy(e, st.atk * 2.1, Math.random() < st.crit + 0.15, 76);
+            }
+          }
+          addFloatingText(slamX, slamY - 24, '🔨 怪力大槌!', '#fb923c');
+        } else {
+          // [ランの奇策ガジェットスタイル - 技1: 魔導トラップ] Places armed magic gadget traps that detonate on enemy contact
+          p.skill1Cd = 1.05;
+          SoundEngine.sfx.ranTrap();
+
+          const tx = clampVal(p.x + Math.cos(ang) * 58, 36, WORLD_W - 36);
+          const ty = clampVal(p.y + Math.sin(ang) * 58, 48, WORLD_H - 36);
+          if (GameState.traps.length >= 6) GameState.traps.shift();
+          GameState.traps.push({
+            x: tx,
+            y: ty,
+            r: 22,
+            blastR: 105,
+            dmg: Math.round(st.atk * 2.15),
+            life: 7.5,
+            pulse: 0
+          });
+          addBurstParticles(tx, ty, '#e879f9', 10, 110);
+          addFloatingText(tx, ty - 20, '💣 魔導トラップ設置!', '#f0abfc');
+        }
+        return;
+      }
+
+      if (slotIndex === 1) {
+        if (p.skill2Cd > 0) return;
+        if (GameState.mp < 20) {
+          triggerToast('💧 MPが足りません');
+          return;
+        }
+        GameState.mp -= 20;
+
+        if (styleId === 'lum') {
+          // [ラムの電撃スタイル - 技2: 雷神ラッシュ] High-speed thunder dash leaving charged bolt trail
+          p.skill2Cd = 1.85;
+          SoundEngine.sfx.lumRush();
+          GameState.shakeTimer = 0.18;
+          GameState.shakePower = 6.5;
+
+          const startX = p.x;
+          const startY = p.y;
+          p.x = clampVal(p.x + Math.cos(ang) * 145, 34, WORLD_W - 34);
+          p.y = clampVal(p.y + Math.sin(ang) * 145, 46, WORLD_H - 34);
+          p.invulnTimer = Math.max(p.invulnTimer, 0.3);
+
+          GameState.particles.push({ type: 'bolt', x1: startX, y1: startY, x2: p.x, y2: p.y, color: '#facc15', life: 0.25, maxLife: 0.25 });
+          GameState.particles.push({ type: 'ring', x: p.x, y: p.y, r: 14, maxR: 120, color: '#38bdf8', life: 0.24, maxLife: 0.24 });
+          addBurstParticles(p.x, p.y, '#fde047', 22, 230);
+
+          for (const e of [...GameState.enemies]) {
+            if (distToSegment(e.x, e.y, startX, startY, p.x, p.y) <= 64 + e.r || Math.hypot(e.x - p.x, e.y - p.y) <= 105 + e.r) {
+              damageEnemy(e, st.atk * 2.25, Math.random() < st.crit + 0.2, 42);
+            }
+          }
+          addFloatingText(p.x, p.y - 26, '⚡ 雷神ラッシュ!!', '#fde047');
+        } else if (styleId === 'shinobu') {
+          // [しのぶの怪力破砕スタイル - 技2: 鉄拳烈風] Twin heavy shockwave blasts along aim line
+          p.skill2Cd = 1.95;
+          SoundEngine.sfx.shinobuGale();
+          GameState.shakeTimer = 0.2;
+          GameState.shakePower = 7;
+
+          [-0.18, 0, 0.18].forEach((off, idx) => {
+            const a = ang + off;
+            GameState.projectiles.push({
+              friendly: true,
+              kind: 'gale_fist',
+              x: p.x + Math.cos(a) * 18,
+              y: p.y + Math.sin(a) * 18,
+              vx: Math.cos(a) * (idx === 1 ? 390 : 340),
+              vy: Math.sin(a) * (idx === 1 ? 390 : 340),
+              r: idx === 1 ? 16 : 12,
+              dmg: Math.round(st.atk * (idx === 1 ? 2.1 : 1.5)),
+              kb: 72,
+              color: '#fb7185',
+              life: 0.72
+            });
+          });
+          addFloatingText(p.x, p.y - 26, '💥 鉄拳烈風!!', '#fda4af');
+        } else {
+          // [ランの奇策ガジェットスタイル - 技2: ラブリー弾幕] 8-way fanned gadget/heart-bolt barrage
+          p.skill2Cd = 1.8;
+          SoundEngine.sfx.ranBarrage();
+
+          const count = 8;
+          for (let i = 0; i < count; i++) {
+            const spread = ((i / (count - 1)) - 0.5) * 0.95;
+            const a = ang + spread;
+            GameState.projectiles.push({
+              friendly: true,
+              kind: 'lovely_bolt',
+              x: p.x + Math.cos(a) * 16,
+              y: p.y + Math.sin(a) * 16,
+              vx: Math.cos(a) * 385,
+              vy: Math.sin(a) * 385,
+              r: 8,
+              dmg: Math.round(st.atk * 1.35),
+              kb: 18,
+              curse: true,
+              color: i % 2 === 0 ? '#f472b6' : '#c084fc',
+              life: 0.85
+            });
+          }
+          addFloatingText(p.x, p.y - 26, '💖 ラブリー弾幕!!', '#f472b6');
+        }
+      }
+    }
+
+    function playerUseSkill1() {
+      triggerSecondarySkill(0);
+    }
+
+    function playerUseSkill2() {
+      triggerSecondarySkill(1);
+    }
+
+    function cycleTrueBossStyle() {
+      if (!GameState.trueBossMode || GameState.screen !== 'play') return;
+      const order = ['lum', 'shinobu', 'ran'];
+      const curIdx = order.indexOf(GameState.trueBossStyleId);
+      GameState.trueBossStyleId = order[(curIdx + 1) % order.length];
+      SoundEngine.sfx.uiClick();
+      refreshSkillLabels();
+      const meta = PARTNER_META[GameState.trueBossStyleId];
+      triggerToast(`🔄 型切替: ${meta.name} (${meta.sk1Name} / ${meta.sk2Name})`);
+    }
+
+    function playerDash() {
+      if (GameState.screen !== 'play') return;
+      const p = GameState.player;
+      if (p.dashCd > 0) return;
+      p.dashTimer = 0.16;
+      p.dashCd = 0.72;
+      p.invulnTimer = 0.26;
+      SoundEngine.sfx.dash();
+      addBurstParticles(p.x, p.y, '#e2e8f0', 8, 120);
+    }
+
+    function useHpPotion() {
+      if (GameState.screen !== 'play' || GameState.potHp <= 0) return;
+      const st = computeStats();
+      GameState.potHp -= 1;
+      GameState.hp = Math.min(st.maxHp, GameState.hp + Math.round(st.maxHp * 0.55));
+      SoundEngine.sfx.pickup();
+      triggerToast('🧪 HPポーション回復！');
+    }
+
+    function useMpPotion() {
+      if (GameState.screen !== 'play' || GameState.potMp <= 0) return;
+      const st = computeStats();
+      GameState.potMp -= 1;
+      GameState.mp = Math.min(st.maxMp, GameState.mp + Math.round(st.maxMp * 0.6));
+      SoundEngine.sfx.pickup();
+      triggerToast('💧 MPポーション回復！');
+    }
+
+    function distToSegment(px, py, x1, y1, x2, y2) {
+      const l2 = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+      if (l2 === 0) return Math.hypot(px - x1, py - y1);
+      let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+      t = Math.max(0, Math.min(1, t));
+      return Math.hypot(px - (x1 + t * (x2 - x1)), py - (y1 + t * (y2 - y1)));
+    }
+
+    function addBurstParticles(x, y, color, count = 14, maxSpeed = 160) {
+      for (let i = 0; i < count; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 35 + Math.random() * maxSpeed;
+        GameState.particles.push({
+          x,
+          y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          r: 2.5 + Math.random() * 3,
+          color,
+          life: 0.25 + Math.random() * 0.22,
+          maxLife: 0.45
+        });
+      }
+    }
+
+    function addFloatingText(x, y, text, color = '#ffffff') {
+      GameState.floatingTexts.push({ x, y, vy: -42, text, color, life: 0.68 });
+    }
+
+    function rollRandomItem(actNum) {
+      const roll = Math.random();
+      if (roll < 0.22) {
+        const rTpl = RUNE_POOL[Math.min(RUNE_POOL.length - 1, Math.floor(Math.random() * (1 + actNum * 0.8)))];
+        return { ...rTpl, kind: 'rune' };
+      }
+      if (roll < 0.42) {
+        const cTpl = CHARM_POOL[Math.floor(Math.random() * CHARM_POOL.length)];
+        return { ...cTpl, kind: 'charm' };
+      }
+      const poolMax = Math.min(ITEM_TEMPLATES.length, 4 + actNum);
+      const wTpl = ITEM_TEMPLATES[Math.floor(Math.random() * poolMax)];
+      return { ...wTpl, kind: 'gear' };
+    }
+
+    function damageEnemy(enemy, rawDmg, isCrit = false, knockback = 26) {
+      if (!enemy || enemy.hp <= 0) return;
+      const finalDmg = Math.max(1, Math.round(rawDmg * (isCrit ? 1.85 : 1.0)));
+      enemy.hp -= finalDmg;
+      enemy.flashTimer = 0.09;
+
+      const p = GameState.player;
+      const dx = enemy.x - p.x;
+      const dy = enemy.y - p.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      const kbScale = enemy.isBoss ? 0.14 : 1.0;
+      enemy.x = clampVal(enemy.x + (dx / dist) * knockback * kbScale, 42, WORLD_W - 42);
+      enemy.y = clampVal(enemy.y + (dy / dist) * knockback * kbScale, 54, WORLD_H - 42);
+
+      addFloatingText(enemy.x, enemy.y - enemy.r - 4, isCrit ? `${finalDmg}!` : `${finalDmg}`, isCrit ? '#fde047' : '#ffffff');
+
+      if (enemy.hp <= 0) {
+        const idx = GameState.enemies.indexOf(enemy);
+        if (idx !== -1) GameState.enemies.splice(idx, 1);
+        onEnemyKilled(enemy);
+      }
+    }
+
+    function onEnemyKilled(enemy) {
+      const st = computeStats();
+      GameState.gold += enemy.gold;
+      GameState.mp = Math.min(st.maxMp, GameState.mp + st.mpOnKill);
+
+      GameState.comboCount += 1;
+      GameState.comboTimer = 2.8;
+      const comboBadge = document.getElementById('stage-combo-badge');
+      if (comboBadge) {
+        comboBadge.textContent = `${GameState.comboCount} COMBO!`;
+        comboBadge.classList.toggle('hidden', GameState.comboCount < 2);
+      }
+
+      if (GameState.decals.length > 85) GameState.decals.shift();
+      GameState.decals.push({ x: enemy.x, y: enemy.y, r: enemy.r * 0.9, color: enemy.color, alpha: 0.24 });
+
+      addBurstParticles(enemy.x, enemy.y, enemy.color, enemy.isBoss ? 36 : 14, enemy.isBoss ? 230 : 150);
+      addFloatingText(enemy.x, enemy.y - 16, `+${enemy.gold}G`, '#facc15');
+
+      GameState.xp += enemy.xp;
+      while (GameState.xp >= GameState.xpToNext) {
+        GameState.xp -= GameState.xpToNext;
+        GameState.lv += 1;
+        GameState.xpToNext = Math.round(GameState.xpToNext * 1.38);
+        const newSt = computeStats();
+        GameState.hp = newSt.maxHp;
+        GameState.mp = newSt.maxMp;
+        SoundEngine.sfx.levelUp();
+        triggerToast(`🌟 LEVEL UP! Lv.${GameState.lv}`);
+      }
+
+      const dropChance = enemy.isBoss ? 1.0 : 0.44;
+      if (Math.random() < dropChance && GameState.inventory.length < 18) {
+        const dropped = rollRandomItem(GameState.act);
+        GameState.inventory.push(dropped);
+        if (dropped.kind === 'rune') {
+          SoundEngine.sfx.runeDrop();
+          triggerToast(`🔮 ルーン入手: ${dropped.name}`);
+        } else {
+          SoundEngine.sfx.pickup();
+          triggerToast(`✦ 入手: ${dropped.name}`);
+        }
+      }
+
+      if (!enemy.isBoss || enemy.isMidBoss) {
+        GameState.killsInAct += enemy.isMidBoss ? 4 : 1;
+        if (!GameState.gateUnlocked && GameState.killsInAct >= GameState.killsNeededForAct) {
+          GameState.gateUnlocked = true;
+          GameState.nextGatePos = { x: WORLD_W * 0.5, y: 150 };
+          SoundEngine.sfx.pickup();
+          triggerToast(
+            GameState.act < 5
+              ? '🌀 北方の次なる領域ゲートが開いた！歩いて向かおう！'
+              : '🌀 最奥の聖座ゲートが開いた！歩いて進み、宿命の決戦へ！'
+          );
+        }
+        updateObjectiveText();
+      } else {
+        document.getElementById('boss-hud').classList.add('hidden');
+        GameState.bossActive = false;
+        SoundEngine.sfx.levelUp();
+
+        if (GameState.trueBossMode) {
+          recordTrueBossClear();
+          const trueEnd = getTrueEndingScript();
+          setTimeout(() => {
+            startStorySequence(trueEnd, () => {
+              writeSaveSlot(0, buildSavePayload());
+              setScreen('title');
+            }, 'ending');
+          }, 850);
+        } else {
+          const clearedPartner = GameState.partnerId;
+          recordRouteClear(clearedPartner);
+          const endScript = getPartnerEndingScript(clearedPartner);
+          setTimeout(() => {
+            startStorySequence(endScript, () => {
+              writeSaveSlot(0, buildSavePayload());
+              setScreen('title');
+            }, 'ending');
+          }, 850);
+        }
+      }
+    }
+
+    // =========================================================================
+    // 10. INPUT HANDLING (PC KEYBOARD + MOBILE TOUCH / D-PAD / CANVAS)
+    // =========================================================================
+    const keysDown = new Set();
+    const touchDirs = { up: false, down: false, left: false, right: false };
+
+    function getMoveVector() {
+      let mx = 0;
+      let my = 0;
+      if (keysDown.has('ArrowLeft') || keysDown.has('KeyA') || touchDirs.left) mx -= 1;
+      if (keysDown.has('ArrowRight') || keysDown.has('KeyD') || touchDirs.right) mx += 1;
+      if (keysDown.has('ArrowUp') || keysDown.has('KeyW') || touchDirs.up) my -= 1;
+      if (keysDown.has('ArrowDown') || keysDown.has('KeyS') || touchDirs.down) my += 1;
+      const len = Math.hypot(mx, my);
+      if (len > 0) {
+        mx /= len;
+        my /= len;
+      }
+      return { mx, my };
+    }
+
+    function bindInputListeners() {
+      window.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(e.code)) {
+          e.preventDefault();
+        }
+        keysDown.add(e.code);
+
+        if (GameState.screen === 'story') {
+          if (e.code === 'Space' || e.code === 'Enter') advanceStoryBeat();
+          return;
+        }
+        if (GameState.screen !== 'play') return;
+
+        if (e.code === 'Space' || e.code === 'KeyJ' || e.code === 'KeyZ') playerBasicAttack();
+        else if (e.code === 'KeyK' || e.code === 'KeyX' || e.code === 'Digit1') playerUseSkill1();
+        else if (e.code === 'KeyL' || e.code === 'KeyC' || e.code === 'Digit2') playerUseSkill2();
+        else if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') playerDash();
+        else if (e.code === 'KeyH') useHpPotion();
+        else if (e.code === 'KeyM') useMpPotion();
+        else if (e.code === 'Tab' || e.code === 'Digit3') {
+          if (GameState.trueBossMode) {
+            cycleTrueBossStyle();
+          }
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        keysDown.delete(e.code);
+      });
+
+      document.querySelectorAll('.dpad-btn').forEach((btn) => {
+        const dir = btn.dataset.dir;
+        const onStart = (ev) => { ev.preventDefault(); touchDirs[dir] = true; btn.classList.add('is-active'); };
+        const onEnd = (ev) => { ev.preventDefault(); touchDirs[dir] = false; btn.classList.remove('is-active'); };
+        btn.addEventListener('pointerdown', onStart);
+        btn.addEventListener('pointerup', onEnd);
+        btn.addEventListener('pointerleave', onEnd);
+        btn.addEventListener('pointercancel', onEnd);
+      });
+
+      const canvas = document.getElementById('game-canvas');
+      let swipeStart = null;
+      canvas.addEventListener('pointerdown', (e) => {
+        if (GameState.screen !== 'play') return;
+        const rect = canvas.getBoundingClientRect();
+        const sx = e.clientX - rect.left;
+        const sy = e.clientY - rect.top;
+        swipeStart = { x: sx, y: sy };
+        const worldX = sx + GameState.camX;
+        const worldY = sy + GameState.camY;
+        const dx = worldX - GameState.player.x;
+        const dy = worldY - GameState.player.y;
+        const d = Math.hypot(dx, dy) || 1;
+        GameState.player.facingX = dx / d;
+        GameState.player.facingY = dy / d;
+        GameState.player.aimAngle = Math.atan2(dy, dx);
+      });
+
+      canvas.addEventListener('pointerup', (e) => {
+        if (GameState.screen !== 'play' || !swipeStart) return;
+        const rect = canvas.getBoundingClientRect();
+        const ex = e.clientX - rect.left;
+        const ey = e.clientY - rect.top;
+        const moveDist = Math.hypot(ex - swipeStart.x, ey - swipeStart.y);
+        swipeStart = null;
+        if (moveDist < 18) playerBasicAttack();
+      });
+
+      document.getElementById('btn-act-atk').addEventListener('pointerdown', (e) => { e.preventDefault(); playerBasicAttack(); });
+      document.getElementById('btn-act-sk1').addEventListener('pointerdown', (e) => { e.preventDefault(); playerUseSkill1(); });
+      document.getElementById('btn-act-sk2').addEventListener('pointerdown', (e) => { e.preventDefault(); playerUseSkill2(); });
+      document.getElementById('btn-dash').addEventListener('pointerdown', (e) => { e.preventDefault(); playerDash(); });
+      document.getElementById('btn-pot-hp').addEventListener('pointerdown', (e) => { e.preventDefault(); useHpPotion(); });
+      document.getElementById('btn-pot-mp').addEventListener('pointerdown', (e) => { e.preventDefault(); useMpPotion(); });
+
+      document.getElementById('btn-start-new').addEventListener('click', () => {
+        SoundEngine.ensureCtx();
+        SoundEngine.sfx.uiClick();
+        renderPartnerCards();
+        setScreen('partner');
+      });
+
+      document.getElementById('btn-true-boss-direct').addEventListener('click', () => {
+        SoundEngine.ensureCtx();
+        SoundEngine.sfx.bossWarn();
+        const script = getTrueBossIntroScript();
+        startStorySequence(script, () => {
+          setScreen('play');
+          setupTrueBossArena();
+        }, 'trueboss');
+      });
+
+      document.getElementById('btn-back-title').addEventListener('click', () => {
+        SoundEngine.sfx.uiClick();
+        setScreen('title');
+      });
+
+      document.getElementById('btn-confirm-partner').addEventListener('click', () => {
+        SoundEngine.ensureCtx();
+        SoundEngine.sfx.uiClick();
+        GameState.lv = 1;
+        GameState.xp = 0;
+        GameState.xpToNext = 75;
+        GameState.gold = 60;
+        GameState.potHp = 3;
+        GameState.potMp = 3;
+        GameState.trueBossMode = false;
+        GameState.partnerLeftForFinalBoss = false;
+        GameState.equipped = {
+          weapon: { ...ITEM_TEMPLATES[0] },
+          armor: { ...ITEM_TEMPLATES[4] },
+          partnerGear: { ...ITEM_TEMPLATES[7] }
+        };
+        GameState.charms = [{ ...CHARM_POOL[0] }];
+        GameState.runes = [{ ...RUNE_POOL[0] }];
+        GameState.inventory = [{ ...ITEM_TEMPLATES[1] }, { ...ITEM_TEMPLATES[8] }];
+        const st = computeStats();
+        GameState.hp = st.maxHp;
+        GameState.mp = st.maxMp;
+
+        const script = getOpeningScript(GameState.partnerId);
+        startStorySequence(script, () => {
+          setScreen('play');
+          setupActField(1);
+        }, 'opening');
+      });
+
+      document.getElementById('btn-continue-latest').addEventListener('click', () => {
+        SoundEngine.ensureCtx();
+        SoundEngine.sfx.uiClick();
+        const latest = readSaveData(0) || readSaveData(1) || readSaveData(2) || readSaveData(3);
+        if (!latest) {
+          triggerToast('セーブデータがありません。新しい冒険を始めましょう！');
+          return;
+        }
+        applySavePayload(latest);
+        triggerToast('セーブデータから再開しました');
+      });
+
+      document.getElementById('btn-open-saves-title').addEventListener('click', () => {
+        SoundEngine.ensureCtx();
+        SoundEngine.sfx.uiClick();
+        openOverlayMenu('saves');
+      });
+
+      document.getElementById('btn-open-menu').addEventListener('click', () => {
+        SoundEngine.sfx.uiClick();
+        openOverlayMenu('gear');
+      });
+
+      document.getElementById('btn-close-menu').addEventListener('click', () => {
+        SoundEngine.sfx.uiClick();
+        closeOverlayMenu();
+      });
+
+      document.querySelectorAll('.overlay-tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          SoundEngine.sfx.uiClick();
+          openOverlayMenu(btn.dataset.tab);
+        });
+      });
+
+      document.getElementById('btn-next-story').addEventListener('click', advanceStoryBeat);
+      document.getElementById('btn-skip-story').addEventListener('click', () => {
+        SoundEngine.sfx.uiClick();
+        const cb = GameState.storyOnComplete;
+        GameState.storyOnComplete = null;
+        if (typeof cb === 'function') cb();
+      });
+
+      document.getElementById('btn-audio-toggle').addEventListener('click', () => {
+        const isMuted = SoundEngine.toggleMute();
+        document.getElementById('btn-audio-toggle').textContent = isMuted ? '🔇' : '🔊';
+      });
+    }
+
+    // =========================================================================
+    // 11. SIMULATION LOOP & MULTI-LAYERED CANVAS RENDERER
+    // =========================================================================
+    function syncHud(st) {
+      document.getElementById('hud-lv').textContent = `Lv.${GameState.lv}`;
+      document.getElementById('hud-gold').textContent = `${GameState.gold}G`;
+      document.getElementById('hud-hp-text').textContent = `${Math.max(0, Math.ceil(GameState.hp))}/${st.maxHp}`;
+      document.getElementById('hud-mp-text').textContent = `${Math.max(0, Math.floor(GameState.mp))}/${st.maxMp}`;
+      document.getElementById('hud-hp-bar').style.width = `${clampVal((GameState.hp / st.maxHp) * 100, 0, 100)}%`;
+      document.getElementById('hud-mp-bar').style.width = `${clampVal((GameState.mp / st.maxMp) * 100, 0, 100)}%`;
+      document.getElementById('hud-xp-bar').style.width = `${clampVal((GameState.xp / GameState.xpToNext) * 100, 0, 100)}%`;
+      document.getElementById('cnt-pot-hp').textContent = GameState.potHp;
+      document.getElementById('cnt-pot-mp').textContent = GameState.potMp;
+
+      const pMeta = PARTNER_META[GameState.partnerId] || PARTNER_META.lum;
+      if (GameState.trueBossMode) {
+        document.getElementById('hud-partner-label').textContent = '★ 3ヒロイン同行';
+        document.getElementById('hud-partner-bar').style.width = '100%';
+      } else if (GameState.partnerLeftForFinalBoss) {
+        document.getElementById('hud-partner-label').textContent = `⚡ ${pMeta.name} 離脱中`;
+        document.getElementById('hud-partner-bar').style.width = '0%';
+      } else {
+        document.getElementById('hud-partner-label').textContent = `★ ${pMeta.name}`;
+        document.getElementById('hud-partner-bar').style.width = '100%';
+      }
+
+      const mainBoss = GameState.enemies.find((e) => e.isBoss && !e.isMidBoss);
+      if (mainBoss && GameState.bossActive) {
+        const pct = clampVal(Math.ceil((mainBoss.hp / mainBoss.maxHp) * 100), 0, 100);
+        document.getElementById('boss-hp-label').textContent = `${pct}% (${Math.max(0, mainBoss.hp)}/${mainBoss.maxHp})`;
+        document.getElementById('boss-hp-bar').style.width = `${pct}%`;
+      }
+    }
+
+    function stepSimulation(dt) {
+      GameState.timeSec += dt;
+
+      if (GameState.toastTimer > 0) {
+        GameState.toastTimer -= dt;
+        if (GameState.toastTimer <= 0) document.getElementById('toast-banner').classList.add('hidden');
+      }
+      if (GameState.banterTimer > 0) {
+        GameState.banterTimer -= dt;
+        if (GameState.banterTimer <= 0) document.getElementById('battle-banter').classList.add('hidden');
+      }
+      if (GameState.comboTimer > 0) {
+        GameState.comboTimer -= dt;
+        if (GameState.comboTimer <= 0) {
+          GameState.comboCount = 0;
+          const b = document.getElementById('stage-combo-badge');
+          if (b) b.classList.add('hidden');
+        }
+      }
+
+      if (GameState.slashFx) {
+        GameState.slashFx.life -= dt;
+        if (GameState.slashFx.life <= 0) GameState.slashFx = null;
+      }
+
+      if (GameState.shakeTimer > 0) GameState.shakeTimer -= dt;
+      if (GameState.hitStopTimer > 0) {
+        GameState.hitStopTimer -= dt;
+        return;
+      }
+
+      if (GameState.screen !== 'play') return;
+
+      const canvas = document.getElementById('game-canvas');
+      const w = canvas.clientWidth || 360;
+      const h = canvas.clientHeight || 520;
+      const st = computeStats();
+      const p = GameState.player;
+
+      GameState.mp = Math.min(st.maxMp, GameState.mp + (3.6 + st.mpRegen) * dt);
+      p.atkCd = Math.max(0, p.atkCd - dt);
+      p.skill1Cd = Math.max(0, p.skill1Cd - dt);
+      p.skill2Cd = Math.max(0, p.skill2Cd - dt);
+      p.dashCd = Math.max(0, p.dashCd - dt);
+      p.invulnTimer = Math.max(0, p.invulnTimer - dt);
+      p.flashTimer = Math.max(0, p.flashTimer - dt);
+
+      const { mx, my } = getMoveVector();
+      if (Math.abs(mx) > 0.08 || Math.abs(my) > 0.08) {
+        p.facingX = mx;
+        p.facingY = my;
+        p.aimAngle = Math.atan2(my, mx);
+      } else if (typeof p.aimAngle !== 'number' || Number.isNaN(p.aimAngle)) {
+        p.aimAngle = Math.atan2(p.facingY ?? -1, p.facingX ?? 0);
+      }
+
+      const spd = st.moveSpeed * (p.dashTimer > 0 ? 2.55 : 1.0);
+      if (p.dashTimer > 0) {
+        p.dashTimer -= dt;
+        p.x += p.facingX * spd * dt;
+        p.y += p.facingY * spd * dt;
+      } else {
+        p.x += mx * spd * dt;
+        p.y += my * spd * dt;
+      }
+
+      p.x = clampVal(p.x, 32, WORLD_W - 32);
+      p.y = clampVal(p.y, 44, WORLD_H - 32);
+
+      for (const prop of GameState.worldProps) {
+        if (!prop.solid) continue;
+        const dx = p.x - prop.x;
+        const dy = p.y - prop.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const minDist = p.r + prop.r;
+        if (dist < minDist) {
+          p.x = prop.x + (dx / dist) * minDist;
+          p.y = prop.y + (dy / dist) * minDist;
+        }
+      }
+
+      const targetCamX = clampVal(p.x - w * 0.5, 0, Math.max(0, WORLD_W - w));
+      const targetCamY = clampVal(p.y - h * 0.5, 0, Math.max(0, WORLD_H - h));
+      GameState.camX += (targetCamX - GameState.camX) * Math.min(1, dt * 10);
+      GameState.camY += (targetCamY - GameState.camY) * Math.min(1, dt * 10);
+
+      if (GameState.gateUnlocked && !GameState.bossActive && !GameState.bossTriggerPending) {
+        if (Math.hypot(p.x - GameState.nextGatePos.x, p.y - GameState.nextGatePos.y) <= 48) {
+          enterNextActByExploration();
+          return;
+        }
+      }
+
+      GameState.packSpawnCd = Math.max(0, GameState.packSpawnCd - dt);
+      if (!GameState.trueBossMode && !GameState.bossActive && !GameState.gateUnlocked) {
+        if (GameState.enemies.length < 18 && GameState.packSpawnCd <= 0) {
+          GameState.packSpawnCd = 1.7;
+          spawnMonsterPack(15, false);
+        }
+      }
+
+      // Partner(s) AI
+      GameState.partners.forEach((pt, idx) => {
+        pt.atkCd = Math.max(0, pt.atkCd - dt);
+        pt.specialCd = Math.max(0, pt.specialCd - dt);
+        pt.flashTimer = Math.max(0, pt.flashTimer - dt);
+
+        let target = null;
+        let bestDist = 250;
+        for (const e of GameState.enemies) {
+          const d = Math.hypot(e.x - p.x, e.y - p.y);
+          if (d < bestDist) {
+            bestDist = d;
+            target = e;
+          }
+        }
+
+        if (target) {
+          const dx = target.x - pt.x;
+          const dy = target.y - pt.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          if (dist > 44) {
+            pt.x += (dx / dist) * 175 * dt;
+            pt.y += (dy / dist) * 175 * dt;
+          }
+          if (dist < 170 && pt.atkCd <= 0) {
+            pt.atkCd = 0.6;
+            if (pt.id === 'lum') {
+              SoundEngine.sfx.lumSpark();
+              GameState.particles.push({ type: 'bolt', x1: pt.x, y1: pt.y, x2: target.x, y2: target.y, color: '#a3e635', life: 0.16, maxLife: 0.16 });
+              damageEnemy(target, st.partnerAtk * 1.25, Math.random() < st.crit, 24);
+            } else if (pt.id === 'shinobu') {
+              SoundEngine.sfx.heavyHit();
+              addBurstParticles(target.x, target.y, '#fbbf24', 10, 145);
+              damageEnemy(target, st.partnerAtk * 1.45, Math.random() < st.crit, 48);
+            } else {
+              SoundEngine.sfx.ranTrap();
+              addBurstParticles(target.x, target.y, '#f472b6', 10, 145);
+              target.chillTimer = 1.9;
+              damageEnemy(target, st.partnerAtk * 1.3, Math.random() < st.crit, 22);
+            }
+
+            if (pt.specialCd <= 0 && Math.random() < 0.2) {
+              pt.specialCd = 13;
+              const pMeta = PARTNER_META[pt.id];
+              if (pMeta) {
+                triggerBanter(pt.id, pMeta.banterCombat[Math.floor(Math.random() * pMeta.banterCombat.length)]);
+              }
+            }
+          }
+        } else {
+          const offsetAngle = (idx - (GameState.partners.length - 1) * 0.5) * 0.9 + Math.PI * 0.5;
+          const slotX = p.x + Math.cos(offsetAngle) * 42;
+          const slotY = p.y + Math.sin(offsetAngle) * 42;
+          const dx = slotX - pt.x;
+          const dy = slotY - pt.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist > 8) {
+            pt.x += (dx / dist) * 180 * dt;
+            pt.y += (dy / dist) * 180 * dt;
+          }
+        }
+        pt.x = clampVal(pt.x, 28, WORLD_W - 28);
+        pt.y = clampVal(pt.y, 40, WORLD_H - 28);
+      });
+
+      // Ran's deployed traps
+      for (let i = GameState.traps.length - 1; i >= 0; i--) {
+        const tr = GameState.traps[i];
+        tr.life -= dt;
+        tr.pulse += dt * 10;
+        if (tr.life <= 0) {
+          GameState.traps.splice(i, 1);
+          continue;
+        }
+        let triggered = false;
+        for (const e of GameState.enemies) {
+          if (Math.hypot(e.x - tr.x, e.y - tr.y) <= tr.r + e.r) {
+            triggered = true;
+            break;
+          }
+        }
+        if (triggered) {
+          SoundEngine.sfx.ranBarrage();
+          GameState.shakeTimer = 0.16;
+          GameState.shakePower = 6;
+          GameState.particles.push({ type: 'ring', x: tr.x, y: tr.y, r: 12, maxR: tr.blastR, color: '#e879f9', life: 0.25, maxLife: 0.25 });
+          addBurstParticles(tr.x, tr.y, '#f472b6', 18, 200);
+          for (const e of [...GameState.enemies]) {
+            if (Math.hypot(e.x - tr.x, e.y - tr.y) <= tr.blastR + e.r) {
+              damageEnemy(e, tr.dmg, Math.random() < st.crit + 0.15, 36);
+            }
+          }
+          GameState.traps.splice(i, 1);
+        }
+      }
+
+      // Enemies & Multi-Pattern Boss AI
+      for (const e of [...GameState.enemies]) {
+        if (e.hp <= 0) continue;
+        e.flashTimer = Math.max(0, e.flashTimer - dt);
+        e.chillTimer = Math.max(0, e.chillTimer - dt);
+        e.atkCd = Math.max(0, e.atkCd - dt);
+
+        const dx = p.x - e.x;
+        const dy = p.y - e.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const chillMult = e.chillTimer > 0 ? 0.5 : 1.0;
+
+        if (dist > e.r + p.r + 4) {
+          e.x += (dx / dist) * e.spd * chillMult * dt;
+          e.y += (dy / dist) * e.spd * chillMult * dt;
+        }
+
+        if (e.isBoss) {
+          if ((e.chargeTimer ?? 0) > 0) {
+            e.chargeTimer -= dt;
+            e.x = clampVal(e.x + (e.chargeVx || 0) * dt, 44, WORLD_W - 44);
+            e.y = clampVal(e.y + (e.chargeVy || 0) * dt, 56, WORLD_H - 44);
+            if (Math.random() < 0.5) addBurstParticles(e.x, e.y, e.color, 2, 90);
+          }
+
+          e.patternTimer = (e.patternTimer ?? 1.2) - dt;
+          if (e.patternTimer <= 0) {
+            const step = (e.patternStep ?? 0) % 3;
+            e.patternStep = step + 1;
+            const baseAng = Math.atan2(dy, dx);
+
+            if (e.bossType === 'true_final') {
+              // TRUE FINAL BOSS: 「ダーク・あたる」 (3 deadly multi-phase patterns)
+              e.patternTimer = 0.95;
+              SoundEngine.sfx.trueBossPulse();
+              GameState.shakeTimer = 0.2;
+              GameState.shakePower = 7.5;
+
+              if (step === 0) {
+                for (let i = 0; i < 14; i++) {
+                  const ang = (i / 14) * Math.PI * 2 + GameState.timeSec * 0.7;
+                  GameState.projectiles.push({
+                    friendly: false, x: e.x, y: e.y,
+                    vx: Math.cos(ang) * 245, vy: Math.sin(ang) * 245,
+                    r: 7.5, dmg: Math.round(e.dmg * 0.9), color: '#a855f7', life: 2.6
+                  });
+                }
+              } else if (step === 1) {
+                GameState.hazards.push({
+                  kind: 'dark_rift', x: p.x, y: p.y, r: 76, tickCd: 0.32,
+                  dmgPerTick: Math.round(e.dmg * 0.72), color: '#7e22ce', life: 2.2
+                });
+                [-0.36, -0.18, 0, 0.18, 0.36].forEach((off) => {
+                  const a = baseAng + off;
+                  GameState.projectiles.push({
+                    friendly: false, x: e.x, y: e.y,
+                    vx: Math.cos(a) * 295, vy: Math.sin(a) * 295,
+                    r: 8, dmg: Math.round(e.dmg * 0.92), color: '#ef4444', life: 2.4
+                  });
+                });
+              } else {
+                e.chargeTimer = 0.36;
+                e.chargeVx = Math.cos(baseAng) * 355;
+                e.chargeVy = Math.sin(baseAng) * 355;
+                for (let i = 0; i < 10; i++) {
+                  const ang = (i / 10) * Math.PI * 2;
+                  GameState.projectiles.push({
+                    friendly: false, x: e.x, y: e.y,
+                    vx: Math.cos(ang) * 225, vy: Math.sin(ang) * 225,
+                    r: 7, dmg: Math.round(e.dmg * 0.85), color: '#c084fc', life: 2.4
+                  });
+                }
+              }
+              addBurstParticles(e.x, e.y, '#a855f7', 16, 210);
+            } else if (e.charId === 'lum') {
+              // LUM BOSS: Electric arcs, storm rings & blink-bolts
+              e.patternTimer = e.isMidBoss ? 1.55 : 1.15;
+              SoundEngine.sfx.lumSpark();
+              if (step === 0) {
+                [-0.32, -0.14, 0, 0.14, 0.32].forEach((off) => {
+                  const a = baseAng + off;
+                  GameState.projectiles.push({
+                    friendly: false, x: e.x, y: e.y,
+                    vx: Math.cos(a) * 295, vy: Math.sin(a) * 295,
+                    r: 7, dmg: Math.round(e.dmg * 0.85), color: '#facc15', life: 2.2
+                  });
+                });
+              } else if (step === 1) {
+                e.x = clampVal(p.x + (Math.random() - 0.5) * 180, 56, WORLD_W - 56);
+                e.y = clampVal(p.y - 90 - Math.random() * 70, 68, WORLD_H - 80);
+                GameState.particles.push({ type: 'ring', x: e.x, y: e.y, r: 16, maxR: 155, color: '#facc15', life: 0.25, maxLife: 0.25 });
+                for (let i = 0; i < 10; i++) {
+                  const ang = (i / 10) * Math.PI * 2;
+                  GameState.projectiles.push({
+                    friendly: false, x: e.x, y: e.y,
+                    vx: Math.cos(ang) * 220, vy: Math.sin(ang) * 220,
+                    r: 6.5, dmg: Math.round(e.dmg * 0.8), color: '#38bdf8', life: 2.4
+                  });
+                }
+              } else {
+                GameState.hazards.push({
+                  kind: 'volt_zone', x: p.x, y: p.y, r: 74, tickCd: 0.3,
+                  dmgPerTick: Math.round(e.dmg * 0.68), color: '#facc15', life: 1.9
+                });
+                GameState.particles.push({ type: 'bolt', x1: e.x, y1: e.y - 70, x2: p.x, y2: p.y, color: '#fde047', life: 0.22, maxLife: 0.22 });
+              }
+            } else if (e.charId === 'shinobu') {
+              // SHINOBU BOSS: Shockwave slams, heavy boulders & high-impact leaps/dashes
+              e.patternTimer = e.isMidBoss ? 1.6 : 1.2;
+              if (step === 0) {
+                SoundEngine.sfx.shinobuHammer();
+                [-0.22, 0, 0.22].forEach((off, idx) => {
+                  const a = baseAng + off;
+                  const spd = idx === 1 ? 280 : 240;
+                  GameState.projectiles.push({
+                    friendly: false, x: e.x, y: e.y,
+                    vx: Math.cos(a) * spd, vy: Math.sin(a) * spd,
+                    r: idx === 1 ? 13 : 10, dmg: Math.round(e.dmg * (idx === 1 ? 1.0 : 0.8)),
+                    color: '#fb7185', life: 2.3
+                  });
+                });
+              } else if (step === 1) {
+                SoundEngine.sfx.heavyHit();
+                GameState.shakeTimer = 0.2;
+                GameState.shakePower = 7;
+                e.chargeTimer = 0.34;
+                e.chargeVx = Math.cos(baseAng) * 330;
+                e.chargeVy = Math.sin(baseAng) * 330;
+                addBurstParticles(e.x, e.y, '#f43f5e', 16, 190);
+              } else {
+                SoundEngine.sfx.shinobuHammer();
+                GameState.shakeTimer = 0.24;
+                GameState.shakePower = 8;
+                GameState.particles.push({ type: 'ring', x: e.x, y: e.y, r: 18, maxR: 165, color: '#fb923c', life: 0.28, maxLife: 0.28 });
+                for (let i = 0; i < 8; i++) {
+                  const ang = (i / 8) * Math.PI * 2 + 0.25;
+                  GameState.projectiles.push({
+                    friendly: false, x: e.x, y: e.y,
+                    vx: Math.cos(ang) * 210, vy: Math.sin(ang) * 210,
+                    r: 8, dmg: Math.round(e.dmg * 0.85), color: '#f97316', life: 2.3
+                  });
+                }
+              }
+            } else {
+              // RAN BOSS: Gadget traps, hypnotic/charm bursts & rapid barrages
+              e.patternTimer = e.isMidBoss ? 1.55 : 1.18;
+              if (step === 0) {
+                SoundEngine.sfx.ranBarrage();
+                for (let i = -3; i <= 3; i++) {
+                  const a = baseAng + i * 0.18;
+                  GameState.projectiles.push({
+                    friendly: false, x: e.x, y: e.y,
+                    vx: Math.cos(a) * 265, vy: Math.sin(a) * 265,
+                    r: 6.5, dmg: Math.round(e.dmg * 0.82), color: '#e879f9', life: 2.4
+                  });
+                }
+              } else if (step === 1) {
+                SoundEngine.sfx.ranTrap();
+                GameState.hazards.push({
+                  kind: 'hex_vortex', x: p.x, y: p.y, r: 78, tickCd: 0.32,
+                  dmgPerTick: Math.round(e.dmg * 0.68), color: '#d946ef', life: 2.3
+                });
+              } else {
+                SoundEngine.sfx.ranBarrage();
+                e.chargeTimer = 0.28;
+                e.chargeVx = Math.cos(baseAng) * 270;
+                e.chargeVy = Math.sin(baseAng) * 270;
+                for (let i = 0; i < 10; i++) {
+                  const ang = (i / 10) * Math.PI * 2;
+                  GameState.projectiles.push({
+                    friendly: false, x: e.x, y: e.y,
+                    vx: Math.cos(ang) * 215, vy: Math.sin(ang) * 215,
+                    r: 6.5, dmg: Math.round(e.dmg * 0.78), color: '#f472b6', life: 2.3
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        if (dist < e.r + p.r + 8 && e.atkCd <= 0 && p.invulnTimer <= 0) {
+          e.atkCd = e.isBoss ? 0.85 : 1.05;
+          p.invulnTimer = 0.42;
+          p.flashTimer = 0.14;
+          const dmg = Math.max(3, Math.round(e.dmg * (1 - st.res * 0.0055)));
+          GameState.hp -= dmg;
+          SoundEngine.sfx.hurt();
+          addFloatingText(p.x, p.y - 20, `-${dmg}`, '#f87171');
+          if (GameState.hp <= 0) {
+            GameState.hp = st.maxHp;
+            GameState.mp = st.maxMp;
+            p.x = WORLD_W * 0.5;
+            p.y = WORLD_H * 0.78;
+            triggerToast('💀 倒れたが、友引の執念で立ち上がった！');
+          }
+        }
+      }
+
+      // Friendly & Enemy Projectiles
+      for (let i = GameState.projectiles.length - 1; i >= 0; i--) {
+        const pr = GameState.projectiles[i];
+        pr.x += pr.vx * dt;
+        pr.y += pr.vy * dt;
+        pr.life -= dt;
+        if (pr.life <= 0 || pr.x < 0 || pr.x > WORLD_W || pr.y < 0 || pr.y > WORLD_H) {
+          GameState.projectiles.splice(i, 1);
+          continue;
+        }
+
+        if (pr.friendly) {
+          let consumed = false;
+          for (const e of [...GameState.enemies]) {
+            if (Math.hypot(pr.x - e.x, pr.y - e.y) <= pr.r + e.r) {
+              if (pr.curse) e.chillTimer = 2.0;
+              damageEnemy(e, pr.dmg, Math.random() < st.crit, pr.kb || 24);
+              addBurstParticles(pr.x, pr.y, pr.color, 7, 130);
+              if (pr.kind === 'gale_fist') {
+                consumed = true;
+                break;
+              }
+            }
+          }
+          if (consumed) GameState.projectiles.splice(i, 1);
+          continue;
+        }
+
+        if (Math.hypot(pr.x - p.x, pr.y - p.y) <= pr.r + p.r && p.invulnTimer <= 0) {
+          p.invulnTimer = 0.42;
+          p.flashTimer = 0.14;
+          const dmg = Math.max(3, Math.round(pr.dmg * (1 - st.res * 0.0055)));
+          GameState.hp -= dmg;
+          SoundEngine.sfx.hurt();
+          addFloatingText(p.x, p.y - 20, `-${dmg}`, '#f87171');
+          GameState.projectiles.splice(i, 1);
+          if (GameState.hp <= 0) {
+            GameState.hp = st.maxHp;
+            GameState.mp = st.maxMp;
+            p.x = WORLD_W * 0.5;
+            p.y = WORLD_H * 0.78;
+            triggerToast('💀 倒れたが、友引の執念で立ち上がった！');
+          }
+        }
+      }
+
+      // Enemy Hazard Zones
+      for (let i = GameState.hazards.length - 1; i >= 0; i--) {
+        const hz = GameState.hazards[i];
+        hz.life -= dt;
+        hz.tickCd -= dt;
+        if (hz.life <= 0) {
+          GameState.hazards.splice(i, 1);
+          continue;
+        }
+        if (Math.hypot(p.x - hz.x, p.y - hz.y) <= hz.r && hz.tickCd <= 0 && p.invulnTimer <= 0) {
+          hz.tickCd = 0.35;
+          p.invulnTimer = 0.35;
+          const dmg = Math.max(3, Math.round(hz.dmgPerTick * (1 - st.res * 0.005)));
+          GameState.hp -= dmg;
+          SoundEngine.sfx.hurt();
+          addFloatingText(p.x, p.y - 20, `-${dmg}`, '#e879f9');
+          if (GameState.hp <= 0) {
+            GameState.hp = st.maxHp;
+            GameState.mp = st.maxMp;
+            p.x = WORLD_W * 0.5;
+            p.y = WORLD_H * 0.78;
+            triggerToast('💀 魔導の渦に呑まれたが、立ち上がった！');
+          }
+        }
+      }
+
+      // Particles
+      for (let i = GameState.particles.length - 1; i >= 0; i--) {
+        const ptc = GameState.particles[i];
+        ptc.life -= dt;
+        if (ptc.life <= 0) {
+          GameState.particles.splice(i, 1);
+          continue;
+        }
+        if (ptc.type === 'ring') {
+          ptc.r += (ptc.maxR - ptc.r) * Math.min(1, dt * 14);
+        } else if (!ptc.type) {
+          ptc.x += ptc.vx * dt;
+          ptc.y += ptc.vy * dt;
+        }
+      }
+
+      // Floating damage/skill texts
+      for (let i = GameState.floatingTexts.length - 1; i >= 0; i--) {
+        const ft = GameState.floatingTexts[i];
+        ft.life -= dt;
+        ft.y += ft.vy * dt;
+        if (ft.life <= 0) GameState.floatingTexts.splice(i, 1);
+      }
+
+      const eCntEl = document.getElementById('hud-enemy-cnt');
+      if (eCntEl) eCntEl.textContent = `敵:${GameState.enemies.length}`;
+      syncHud(st);
+    }
+
+    function renderCanvas() {
+      const canvas = document.getElementById('game-canvas');
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = canvas.clientWidth || 360;
+      const h = canvas.clientHeight || 520;
+
+      if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
+        canvas.width = Math.floor(w * dpr);
+        canvas.height = Math.floor(h * dpr);
+      }
+
+      const ctx = canvas.getContext('2d');
+      ctx.save();
+      ctx.scale(dpr, dpr);
+
+      if (GameState.shakeTimer > 0) {
+        ctx.translate((Math.random() - 0.5) * GameState.shakePower * 2, (Math.random() - 0.5) * GameState.shakePower * 2);
+      }
+
+      const cfg = getRouteActConfig(GameState.partnerId, GameState.act);
+      ctx.fillStyle = cfg.bg2;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.translate(-GameState.camX, -GameState.camY);
+
+      const tileW = 64;
+      const tileH = 44;
+      const startCol = Math.max(0, Math.floor(GameState.camX / tileW) - 1);
+      const endCol = Math.min(Math.ceil(WORLD_W / tileW), Math.ceil((GameState.camX + w) / tileW) + 1);
+      const startRow = Math.max(0, Math.floor(GameState.camY / tileH) - 1);
+      const endRow = Math.min(Math.ceil(WORLD_H / tileH), Math.ceil((GameState.camY + h) / tileH) + 1);
+
+      for (let r = startRow; r < endRow; r++) {
+        for (let c = startCol; c < endCol; c++) {
+          ctx.fillStyle = ((r + c) % 2 === 0) ? cfg.tileA : cfg.tileB;
+          ctx.fillRect(c * tileW, r * tileH, tileW, tileH);
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.36)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(c * tileW, r * tileH, tileW, tileH);
+        }
+      }
+
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.36)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(18, 28, WORLD_W - 36, WORLD_H - 46);
+
+      for (const d of GameState.decals) {
+        ctx.save();
+        ctx.globalAlpha = d.alpha;
+        ctx.fillStyle = d.color;
+        ctx.beginPath();
+        ctx.ellipse(d.x, d.y, d.r, d.r * 0.65, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (GameState.gateUnlocked && !GameState.bossActive) {
+        const gx = GameState.nextGatePos.x;
+        const gy = GameState.nextGatePos.y;
+        const pulse = 26 + Math.sin(GameState.timeSec * 7) * 4;
+        ctx.save();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(gx, gy, pulse, pulse * 0.65, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+        ctx.beginPath();
+        ctx.ellipse(gx, gy, pulse * 0.78, pulse * 0.48, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#e0f2fe';
+        ctx.font = 'bold 11px "Noto Sans JP", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(GameState.act < 5 ? '🌀 次の領域へ' : '⚡ 聖座の決戦へ', gx, gy - 24);
+        ctx.restore();
+      }
+
+      for (const prop of GameState.worldProps) {
+        ctx.save();
+        ctx.translate(prop.x, prop.y);
+        ctx.fillStyle = 'rgba(0,0,0,0.42)';
+        ctx.beginPath();
+        ctx.ellipse(0, prop.r * 0.75, prop.r * 0.95, prop.r * 0.42, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (prop.type === 'brazier') {
+          ctx.fillStyle = '#44403c';
+          ctx.beginPath();
+          ctx.arc(0, 0, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = cfg.accent;
+          ctx.beginPath();
+          ctx.arc(0, -4, 6 + Math.sin(GameState.timeSec * 14 + prop.x) * 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (prop.type === 'foliage') {
+          ctx.fillStyle = '#166534';
+          ctx.beginPath();
+          ctx.arc(-5, -2, 10, 0, Math.PI * 2);
+          ctx.arc(6, -3, 9, 0, Math.PI * 2);
+          ctx.arc(0, -8, 11, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (prop.type === 'ice_spire') {
+          ctx.fillStyle = '#0284c7';
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(0, -24); ctx.lineTo(12, 6); ctx.lineTo(-12, 6);
+          ctx.closePath();
+          ctx.fill(); ctx.stroke();
+        } else {
+          ctx.fillStyle = '#475569';
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = 2;
+          ctx.fillRect(-10, -18, 20, 24);
+          ctx.strokeRect(-10, -18, 20, 24);
+          ctx.fillStyle = '#64748b';
+          ctx.fillRect(-12, -21, 24, 5);
+        }
+        ctx.restore();
+      }
+
+      // Ran's deployed traps
+      for (const tr of GameState.traps) {
+        ctx.save();
+        const rPulse = tr.r + Math.sin(tr.pulse) * 3;
+        ctx.strokeStyle = '#e879f9';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(tr.x, tr.y, rPulse, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(232, 121, 249, 0.24)';
+        ctx.beginPath();
+        ctx.arc(tr.x, tr.y, rPulse * 0.72, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Enemies & Bosses
+      for (const e of GameState.enemies) {
+        if (e.hp <= 0) continue;
+        if (e.isBoss && e.charId) {
+          CharacterArt.drawFieldUnit(ctx, e.charId, e.x, e.y, e.r, GameState.timeSec, true, e.flashTimer > 0);
+        } else {
+          ctx.save();
+          ctx.translate(e.x, e.y);
+          ctx.fillStyle = 'rgba(0,0,0,0.42)';
+          ctx.beginPath();
+          ctx.ellipse(0, e.r * 0.75, e.r * 0.9, e.r * 0.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = e.flashTimer > 0 ? '#ffffff' : e.color;
+          ctx.strokeStyle = '#09090b';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, e.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.arc(-e.r * 0.32, -2, 2.2, 0, Math.PI * 2);
+          ctx.arc(e.r * 0.32, -2, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          const hpRatio = clampVal(e.hp / e.maxHp, 0, 1);
+          ctx.fillStyle = 'rgba(0,0,0,0.75)';
+          ctx.fillRect(-14, -e.r - 10, 28, 4);
+          ctx.fillStyle = hpRatio > 0.35 ? '#ef4444' : '#facc15';
+          ctx.fillRect(-14, -e.r - 10, 28 * hpRatio, 4);
+          ctx.restore();
+        }
+      }
+
+      // Active Partner(s) & Protagonist Ataru
+      for (const pt of GameState.partners) {
+        CharacterArt.drawFieldUnit(ctx, pt.id, pt.x, pt.y, pt.r, GameState.timeSec, false, pt.flashTimer > 0);
+      }
+
+      const p = GameState.player;
+      CharacterArt.drawFieldUnit(ctx, 'ataru', p.x, p.y, p.r, GameState.timeSec, false, p.flashTimer > 0, getAimAngle());
+
+      // Dedicated Frontal-Cone Slash Effect Arc
+      if (GameState.slashFx && GameState.slashFx.life > 0) {
+        const sfx = GameState.slashFx;
+        const ratio = clampVal(sfx.life / (sfx.maxLife || 0.19), 0, 1);
+        ctx.save();
+        ctx.globalAlpha = ratio;
+        ctx.strokeStyle = sfx.color || '#fef08a';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(sfx.x, sfx.y, sfx.reach, sfx.ang - sfx.halfAngle, sfx.ang + sfx.halfAngle);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(sfx.x, sfx.y, sfx.reach - 3, sfx.ang - sfx.halfAngle * 0.85, sfx.ang + sfx.halfAngle * 0.85);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Projectiles
+      for (const pr of GameState.projectiles) {
+        ctx.save();
+        ctx.fillStyle = pr.color;
+        ctx.beginPath();
+        ctx.arc(pr.x, pr.y, pr.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Hazard Zones
+      for (const hz of GameState.hazards) {
+        ctx.save();
+        ctx.strokeStyle = hz.color;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(hz.x, hz.y, hz.r * (0.85 + Math.sin(GameState.timeSec * 12) * 0.12), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = hz.color + '26';
+        ctx.beginPath();
+        ctx.arc(hz.x, hz.y, hz.r * 0.75, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Particles
+      for (const ptc of GameState.particles) {
+        const maxLife = ptc.maxLife || 0.25;
+        const alpha = clampVal(ptc.life / maxLife, 0, 1);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        if (ptc.type === 'slashFx') {
+          ctx.strokeStyle = ptc.color;
+          ctx.lineWidth = 5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(ptc.x, ptc.y, ptc.reach - 5, ptc.ang - ptc.halfAngle, ptc.ang + ptc.halfAngle);
+          ctx.stroke();
+        } else if (ptc.type === 'bolt') {
+          ctx.strokeStyle = ptc.color;
+          ctx.lineWidth = 3.2;
+          ctx.beginPath();
+          ctx.moveTo(ptc.x1, ptc.y1);
+          ctx.lineTo((ptc.x1 + ptc.x2) * 0.5 + (Math.random() - 0.5) * 20, (ptc.y1 + ptc.y2) * 0.5 + (Math.random() - 0.5) * 20);
+          ctx.lineTo(ptc.x2, ptc.y2);
+          ctx.stroke();
+        } else if (ptc.type === 'ring') {
+          ctx.strokeStyle = ptc.color;
+          ctx.lineWidth = 3.2;
+          ctx.beginPath();
+          ctx.arc(ptc.x, ptc.y, ptc.r, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = ptc.color;
+          ctx.beginPath();
+          ctx.arc(ptc.x, ptc.y, ptc.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Floating damage & skill names
+      ctx.font = '900 13px "Noto Sans JP", sans-serif';
+      ctx.textAlign = 'center';
+      for (const ft of GameState.floatingTexts) {
+        ctx.save();
+        ctx.globalAlpha = clampVal(ft.life / 0.5, 0, 1);
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(ft.text, ft.x, ft.y);
+        ctx.fillStyle = ft.color;
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+      }
+
+      ctx.restore();
+
+      // Minimap Radar
+      const mmSize = 54;
+      const mmX = w - mmSize - 8;
+      const mmY = 48;
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.fillRect(mmX, mmY, mmSize, mmSize);
+      ctx.strokeRect(mmX, mmY, mmSize, mmSize);
+
+      for (const e of GameState.enemies) {
+        if (e.hp <= 0) continue;
+        ctx.fillStyle = e.isBoss ? '#facc15' : '#ef4444';
+        ctx.fillRect(mmX + (e.x / WORLD_W) * mmSize - 1, mmY + (e.y / WORLD_H) * mmSize - 1, e.isBoss ? 3.5 : 2, e.isBoss ? 3.5 : 2);
+      }
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(mmX + (p.x / WORLD_W) * mmSize - 2, mmY + (p.y / WORLD_H) * mmSize - 2, 4, 4);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function renderFrame() {
+      renderCanvas();
+    }
+
+    let lastFrameTime = performance.now();
+    function mainLoop(now) {
+      const dt = Math.min(0.05, Math.max(0.001, (now - lastFrameTime) / 1000));
+      lastFrameTime = now;
+      stepSimulation(dt);
+      renderFrame();
+      requestAnimationFrame(mainLoop);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      bindInputListeners();
+      refreshTitleClearBadges();
+      drawTitleBanner();
+      setScreen('title');
+      requestAnimationFrame(mainLoop);
+    });
+  </script>
+</body>
+</html>
